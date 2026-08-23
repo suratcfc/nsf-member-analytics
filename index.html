@@ -186,6 +186,29 @@ tbody tr:last-child td{border-bottom:0}
 .cxs{display:grid;grid-template-columns:repeat(var(--n,8),1fr);gap:10px;margin-top:10px;font-size:12px;color:var(--muted);text-align:center;font-family:var(--mono)}
 .cxs span.part{color:var(--gold)}
 
+/* ---------- member-drive trend ---------- */
+.drive-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.drive-kpi{padding:18px 20px}
+.drive-kpi .cap{font-size:12px;color:var(--muted)}
+.drive-kpi .num{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--ink);line-height:1.2;margin-top:3px}
+.drive-kpi .num.behind{color:var(--behind)}
+.drive-kpi .note{font-size:11.5px;color:var(--muted);margin-top:5px}
+.drive-chart{padding:22px 24px 16px;overflow:hidden}
+.drive-legend{display:flex;flex-wrap:wrap;gap:9px 22px;margin-bottom:10px;font-size:12.5px;color:var(--muted)}
+.drive-legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.drive-svg{width:100%;height:auto;display:block;min-width:640px}
+.drive-svg .grid{stroke:var(--line);stroke-width:1}
+.drive-svg .vgrid{stroke:var(--line-soft);stroke-width:1;stroke-dasharray:4 5}
+.drive-svg .axis{fill:var(--muted);font-family:var(--mono);font-size:12px}
+.drive-svg .note{fill:var(--ink-soft);font-family:var(--body);font-size:11.5px}
+.drive-note{margin:12px 0 0;font-size:12.5px;color:var(--muted)}
+.drive-note b{color:var(--ink);font-weight:600}
+.weekly-table th{cursor:default;white-space:normal;line-height:1.3;min-width:96px}
+.weekly-table th:first-child{min-width:170px}
+.weekly-table td:first-child{min-width:170px}
+.weekly-table .pending td{color:var(--gold);background:rgba(227,182,85,.06)}
+.weekly-table .zero{color:var(--muted)}
+
 /* ---------- split / donut ---------- */
 .split2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
 .split2 .card{padding:24px}
@@ -225,6 +248,8 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   .bar .bv{text-align:left;min-width:0}
   .cbars{height:180px}
   .cxs{font-size:10.5px}
+  .drive-summary{grid-template-columns:1fr}
+  .drive-chart{overflow-x:auto}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important;animation:none !important}
@@ -244,6 +269,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     </a>
     <nav class="topnav" id="nav">
       <a href="#เดือน">รายเดือน</a>
+      <a href="#รายสัปดาห์">รายสัปดาห์</a>
       <a href="#ช่องทาง">ช่องทาง</a>
       <a href="#แคมเปญ">แคมเปญ</a>
       <a href="#อายุ">ช่วงอายุ</a>
@@ -322,6 +348,28 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       <div class="cbars" id="monthBars"></div>
       <div class="cxs" id="monthLabs"></div>
     </div>
+  </div>
+</section>
+
+<section id="รายสัปดาห์">
+  <div class="wrap">
+    <div class="sec-head"><h2>สมาชิกใหม่สะสมรายสัปดาห์</h2><span class="hint">ผลจริงเทียบเส้นเป้าหมายแผน ก.ค.–ธ.ค. 2569</span></div>
+    <div class="sec-rule"></div>
+    <div class="drive-summary">
+      <div class="card drive-kpi"><div class="cap">เป้าหมายทั้งแผน</div><div class="num" id="driveTarget">—</div><div class="note">ภายใน 31 ธ.ค. 2569</div></div>
+      <div class="card drive-kpi"><div class="cap">ควรทำได้ถึงวันที่ล่าสุด</div><div class="num" id="drivePace">—</div><div class="note">คำนวณแบบเฉลี่ยตลอดช่วงแผน</div></div>
+      <div class="card drive-kpi"><div class="cap">ห่างจากเส้นเป้าหมาย</div><div class="num" id="driveGap">—</div><div class="note" id="driveGapNote"></div></div>
+    </div>
+    <div class="card drive-chart">
+      <div class="drive-legend"><span><i style="background:var(--accent)"></i>ผลจริงสะสม</span><span><i style="background:var(--gold)"></i>เส้นเป้าหมาย</span></div>
+      <div style="overflow-x:auto"><svg class="drive-svg" id="driveTrend" viewBox="0 0 1000 390" role="img" aria-label="กราฟสมาชิกใหม่สะสมรายสัปดาห์เทียบเส้นเป้าหมาย"></svg></div>
+      <p class="drive-note" id="driveNote"></p>
+    </div>
+
+    <div style="height:20px"></div>
+    <div class="sec-head"><h2 style="font-size:18px">ข้อมูลรายสัปดาห์แยกตามแคมเปญ</h2><span class="hint">ใช้ชื่อแคมเปญแทนรหัส P1–P8</span></div>
+    <div class="sec-rule"></div>
+    <div class="card tblwrap"><table class="weekly-table" id="weeklyCampaignTable"></table></div>
   </div>
 </section>
 
@@ -575,6 +623,79 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     reveal(bars);
   }
 
+  // ---------- member-drive target trend + weekly campaign table ----------
+  function renderMemberDrive(){
+    var md = D.memberDrive;
+    if(!md) return;
+    var DAY = 86400000;
+    function dateOnly(s){ var a=s.split('-').map(Number); return new Date(Date.UTC(a[0],a[1]-1,a[2])); }
+    function thaiDate(s){
+      var x=dateOnly(s), mons=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+      return x.getUTCDate()+' '+mons[x.getUTCMonth()]+' '+(x.getUTCFullYear()+543);
+    }
+    function weekTotal(w){ return md.campaigns.reduce(function(s,c){ return s+(w.values[c.key]||0); },0); }
+    var start=dateOnly(md.startDate), end=dateOnly(md.endDate), asof=dateOnly(md.asOf);
+    var totalDays=Math.round((end-start)/DAY)+1;
+    var elapsed=Math.max(0,Math.min(totalDays,Math.round((asof-start)/DAY)+1));
+    var pace=md.carryOver+(md.totalTarget-md.carryOver)*elapsed/totalDays;
+    var actual=D.totals.members;
+    var gap=actual-pace;
+
+    document.getElementById('driveTarget').textContent=nf(md.totalTarget)+' คน';
+    document.getElementById('drivePace').textContent=nf(pace)+' คน';
+    var gapNode=document.getElementById('driveGap');
+    gapNode.textContent=(gap>=0?'+':'−')+nf(Math.abs(gap))+' คน';
+    gapNode.className='num '+(gap>=0?'good':'behind');
+    document.getElementById('driveGapNote').textContent=gap>=0?'เร็วกว่าเส้นเป้าหมาย':'ต่ำกว่าเส้นเป้าหมาย ณ '+thaiDate(md.asOf);
+
+    var W=1000,H=390,L=76,R=24,T=20,B=42;
+    function x(dt){ return L+(W-L-R)*Math.max(0,Math.min(1,(dt-start)/(end-start))); }
+    function y(v){ return H-B-(H-T-B)*v/md.totalTarget; }
+    var svg='', i;
+    for(i=0;i<=4;i++){
+      var tick=md.totalTarget*i/4, yy=y(tick);
+      svg+='<line class="grid" x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'"></line>'+
+           '<text class="axis" x="'+(L-12)+'" y="'+(yy+4)+'" text-anchor="end">'+nf(tick)+'</text>';
+    }
+    var monthNames=['ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    for(i=0;i<6;i++){
+      var dt=new Date(Date.UTC(2026,6+i,1)), xx=x(dt);
+      if(i) svg+='<line class="vgrid" x1="'+xx+'" y1="'+T+'" x2="'+xx+'" y2="'+(H-B)+'"></line>';
+      svg+='<text class="axis" x="'+(xx+6)+'" y="'+(H-14)+'">'+monthNames[i]+'</text>';
+    }
+    svg+='<line x1="'+x(start)+'" y1="'+y(md.carryOver)+'" x2="'+x(end)+'" y2="'+y(md.totalTarget)+'" stroke="'+cssvar('--gold')+'" stroke-width="3" stroke-dasharray="9 7"></line>';
+    svg+='<circle cx="'+x(start)+'" cy="'+y(md.carryOver)+'" r="4" fill="'+cssvar('--gold')+'"></circle>'+
+         '<text class="note" x="'+(x(start)+10)+'" y="'+(y(md.carryOver)-10)+'">ยอดยกมา '+nf(md.carryOver)+'</text>';
+
+    var run=md.carryOver, pts=[[x(start),y(run)]];
+    md.weekly.forEach(function(w){ run+=weekTotal(w); pts.push([x(dateOnly(w.end)),y(run)]); });
+    if(md.pending && md.pending.members){ run+=md.pending.members; pts.push([x(asof),y(run)]); }
+    svg+='<polyline fill="none" stroke="'+cssvar('--accent')+'" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" points="'+pts.map(function(p){return p.join(',');}).join(' ')+'"></polyline>';
+    pts.slice(1).forEach(function(p){ svg+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5" fill="'+cssvar('--surface')+'" stroke="'+cssvar('--accent')+'" stroke-width="3"></circle>'; });
+    var todayX=x(asof);
+    svg+='<line x1="'+todayX+'" y1="'+T+'" x2="'+todayX+'" y2="'+(H-B)+'" stroke="'+cssvar('--muted')+'" stroke-width="1"></line>'+
+         '<text class="note" x="'+(todayX+7)+'" y="'+(T+13)+'">ข้อมูลล่าสุด</text>'+
+         '<text class="note" x="'+(todayX+7)+'" y="'+(y(actual)-10)+'">'+nf(actual)+' คน</text>';
+    document.getElementById('driveTrend').innerHTML=svg;
+
+    var allocated=md.weekly.reduce(function(s,w){return s+weekTotal(w);},0);
+    document.getElementById('driveNote').innerHTML=
+      'ยอดสะสม <b>'+nf(actual)+' คน</b> ณ '+thaiDate(md.asOf)+' = ยอดยกมา '+nf(md.carryOver)+
+      ' + จัดสรรตามแคมเปญถึง '+thaiDate(md.detailAsOf)+' จำนวน '+nf(allocated)+
+      (md.pending && md.pending.members?' + รอจัดสรรเข้าแคมเปญ '+nf(md.pending.members):'')+' คน';
+
+    var totals={}; md.campaigns.forEach(function(c){totals[c.key]=0;});
+    var head='<thead><tr><th>สัปดาห์สิ้นสุด</th>'+md.campaigns.map(function(c){return '<th title="'+c.full+'">'+c.name+'</th>';}).join('')+'<th>รวม</th></tr></thead>';
+    var rows=md.weekly.map(function(w){
+      var cells=md.campaigns.map(function(c){var v=w.values[c.key]||0; totals[c.key]+=v; return '<td class="num '+(v===0?'zero':'')+'">'+nf(v)+'</td>';}).join('');
+      return '<tr><td>สัปดาห์ที่ '+w.week+' · '+thaiDate(w.end)+'</td>'+cells+'<td class="num"><b>'+nf(weekTotal(w))+'</b></td></tr>';
+    }).join('');
+    var pending=md.pending && md.pending.members ? '<tr class="pending"><td>'+thaiDate(md.pending.from)+' – '+thaiDate(md.pending.to)+' · '+md.pending.label+'</td>'+md.campaigns.map(function(){return '<td>—</td>';}).join('')+'<td class="num"><b>'+nf(md.pending.members)+'</b></td></tr>' : '';
+    var grand=allocated+(md.pending?md.pending.members:0);
+    var foot='<tfoot><tr class="tfoot"><td>รวมช่วงแผน</td>'+md.campaigns.map(function(c){return '<td class="num">'+nf(totals[c.key])+'</td>';}).join('')+'<td class="num">'+nf(grand)+'</td></tr></tfoot>';
+    document.getElementById('weeklyCampaignTable').innerHTML=head+'<tbody>'+rows+pending+'</tbody>'+foot;
+  }
+
   // ---------- sortable table ----------
   function renderTable(node, rows, cols, totalRow, defaultKey){
     var state = node._sort || (node._sort = {key: defaultKey || cols[1].key, dir:-1});
@@ -680,6 +801,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   // ---------- render everything ----------
   function renderAll(){
     renderMonths();
+    renderMemberDrive();
     renderBars(document.getElementById('chBars'), D.channels);
     renderBars(document.getElementById('ctBars'), D.channelTypes.map(function(c){
       return {name:c.code+' · '+c.label, members:c.members, money:c.money};
