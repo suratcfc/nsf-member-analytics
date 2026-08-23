@@ -95,6 +95,8 @@ a{color:var(--ink)}
 .eyebrow{font-family:var(--display);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:0 0 12px;font-weight:600}
 .hero h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,4.4vw,44px);line-height:1.12;margin:0 0 8px;color:var(--ink);letter-spacing:-.01em}
 .hero .period{color:var(--muted);font-size:14.5px;margin:0 0 34px}
+.freshness{margin:-14px 0 26px;padding:12px 15px;border:1px solid rgba(227,182,85,.35);border-radius:10px;background:rgba(227,182,85,.07);color:var(--muted);font-size:12.8px}
+.freshness b{color:var(--ink);font-weight:600}
 
 .headline{display:flex;flex-wrap:wrap;align-items:flex-end;gap:26px 46px;margin-bottom:30px}
 .bignum{font-family:var(--mono);font-weight:600;font-size:clamp(46px,8vw,74px);line-height:1;letter-spacing:-.03em;color:var(--ink)}
@@ -268,19 +270,20 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       <div class="stat">
         <div class="label">เงินนำส่งงวดแรก</div>
         <div class="v" id="kMoney">—</div>
-        <div class="note">บาท</div>
+        <div class="note" id="kMoneyNote">บาท</div>
       </div>
       <div class="stat">
         <div class="label">มัธยฐานต่อคน</div>
         <div class="v warn" id="kMedian">—</div>
-        <div class="note">เท่ากับขั้นต่ำที่สมัครได้</div>
+        <div class="note" id="kMedianNote">เท่ากับขั้นต่ำที่สมัครได้</div>
       </div>
       <div class="stat carry">
         <div class="label">ค่าเฉลี่ยต่อคน</div>
         <div class="v" id="kAvg">—</div>
-        <div class="note">ถูกดึงขึ้นโดยคนส่วนน้อย</div>
+        <div class="note" id="kAvgNote">ถูกดึงขึ้นโดยคนส่วนน้อย</div>
       </div>
     </div>
+    <p class="freshness" id="freshnessNote"></p>
 
     <div class="rail">
       <div class="rail-head">
@@ -455,12 +458,22 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   function el(tag,cls,html){ var e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
 
   // ---------- header numbers ----------
+  var detailMembers = D.meta.detailMembers || D.totals.members;
+  var pendingMembers = Math.max(0, D.totals.members - detailMembers);
   document.getElementById('periodLine').textContent =
-    D.meta.periodLabel + ' · ข้อมูลจาก ' + D.meta.source;
-  document.getElementById('asof').textContent = 'ข้อมูล ณ ' + D.meta.dataAsOf;
-  document.getElementById('fSource').textContent = D.meta.source;
+    D.meta.periodLabel + ' · ยอดสมาชิกล่าสุดจาก ' + (D.meta.latestSource || D.meta.source);
+  document.getElementById('asof').textContent =
+    'สมาชิก ณ ' + D.meta.dataAsOf + ' · รายละเอียด/เงิน ณ ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+  document.getElementById('fSource').textContent =
+    D.meta.source + ' · ยอดสมาชิกล่าสุด: ' + (D.meta.latestSource || D.meta.source);
   document.getElementById('fDef').textContent = D.meta.definition;
-  document.getElementById('fAsOf').textContent = D.meta.dataAsOf;
+  document.getElementById('fAsOf').textContent =
+    'สมาชิก ' + D.meta.dataAsOf + ' · รายละเอียดและเงิน ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+  document.getElementById('freshnessNote').innerHTML =
+    'ยอดสมาชิกล่าสุด <b>' + nf(D.totals.members) + ' คน</b> ณ ' + D.meta.dataAsOf +
+    ' · รายละเอียดรายเดือน ช่องทาง แคมเปญ อายุ อาชีพ พื้นที่ และตัวเลขทางการเงินยืนยันถึง <b>' +
+    (D.meta.detailAsOf || D.meta.dataAsOf) + '</b> (' + nf(detailMembers) + ' คน)' +
+    (pendingMembers ? ' · เพิ่มขึ้นอีก <b>' + nf(pendingMembers) + ' คน</b>ที่ยังรอจัดสรรลงมิติย่อย' : '');
 
   // count-up on the big number
   (function(){
@@ -477,13 +490,17 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   document.getElementById('kMoney').textContent  = nf(D.totals.money);
   document.getElementById('kMedian').textContent = nf(D.totals.median);
   document.getElementById('kAvg').textContent    = nf(D.totals.avg,2);
+  var detailNote = 'ข้อมูลถึง ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+  document.getElementById('kMoneyNote').textContent = 'บาท · ' + detailNote;
+  document.getElementById('kMedianNote').textContent = 'เท่ากับขั้นต่ำที่สมัครได้ · ' + detailNote;
+  document.getElementById('kAvgNote').textContent = 'ถูกดึงขึ้นโดยคนส่วนน้อย · ' + detailNote;
 
   // ---------- follow-through rail ----------
   (function(){
-    var ft = D.followThrough, share = pct(ft.members, D.totals.members);
+    var ft = D.followThrough, share = pct(ft.members, detailMembers);
     document.getElementById('ftChip').textContent = nf(ft.rows)+' รายการ · '+nf(ft.money)+' บาท';
     document.getElementById('ftIn').textContent  = nf(ft.members)+' คน · '+share.toFixed(1)+'%';
-    document.getElementById('ftOut').textContent = 'ยังไม่ส่งต่อ '+nf(D.totals.members-ft.members)+' คน';
+    document.getElementById('ftOut').textContent = 'ยังไม่ส่งต่อ '+nf(detailMembers-ft.members)+' คน';
     document.getElementById('ftNote').innerHTML =
       'เงินงวดถัดไปรวม <b>'+nf(ft.money)+' บาท</b> มากกว่าเงินงวดแรกของสมาชิกใหม่ทั้งหมดรวมกัน ('+nf(D.totals.money)+' บาท) '+
       'ทั้งที่มาจากคนเพียง '+share.toFixed(1)+'% — เฉลี่ย <b>'+nf(ft.avgPerMember)+' บาท/คน</b>';
@@ -542,7 +559,8 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     var max = Math.max.apply(null, D.months.map(val)) || 1;
     var partial = D.months.filter(function(m){ return m.partial; }).length;
     document.getElementById('hMonth').textContent =
-      partial ? 'แถบลายทางคือเดือนที่ข้อมูลยังไม่ครบเดือน' : '';
+      (partial ? 'แถบลายทางคือเดือนที่ข้อมูลยังไม่ครบเดือน · ' : '') +
+      'รายละเอียดถึง ' + (D.meta.detailAsOf || D.meta.dataAsOf);
     D.months.forEach(function(m){
       var h = (val(m)/max*88)+'%';
       var c = el('div','cb'+(m.partial?' part':''));
