@@ -474,7 +474,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   </div>
 </footer>
 
-<script src="data/2569.js?v=20260823-weekly"></script>
+<script src="data/2569.js?v=20260823-monthly-fix"></script>
 <script>
 (function(){
   'use strict';
@@ -494,12 +494,14 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   function val(row){
     if(metric==='members') return row.members;
     if(metric==='money') return row.money;
-    return row.members ? row.money/row.members : 0;
+    var avgBase = row.avgMembers || row.members;
+    return avgBase ? row.money/avgBase : 0;
   }
   function fmt(row){
     if(metric==='members') return nf(row.members);
     if(metric==='money') return nf(row.money);
-    return nf(row.members ? row.money/row.members : 0);
+    var avgBase = row.avgMembers || row.members;
+    return nf(avgBase ? row.money/avgBase : 0);
   }
   function unit(){ return metric==='members' ? 'คน' : 'บาท'; }
   function cssvar(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
@@ -519,7 +521,8 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     'สมาชิก ' + D.meta.dataAsOf + ' · รายละเอียดและเงิน ' + (D.meta.detailAsOf || D.meta.dataAsOf);
   document.getElementById('freshnessNote').innerHTML =
     'ยอดสมาชิกล่าสุด <b>' + nf(D.totals.members) + ' คน</b> ณ ' + D.meta.dataAsOf +
-    ' · รายละเอียดรายเดือน ช่องทาง แคมเปญ อายุ อาชีพ พื้นที่ และตัวเลขทางการเงินยืนยันถึง <b>' +
+    ' · จำนวนสมาชิกรายเดือนอัปเดตถึง <b>' + D.meta.dataAsOf + '</b>' +
+    ' · ช่องทาง แคมเปญ อายุ อาชีพ พื้นที่ และตัวเลขทางการเงินยืนยันถึง <b>' +
     (D.meta.detailAsOf || D.meta.dataAsOf) + '</b> (' + nf(detailMembers) + ' คน)' +
     (pendingMembers ? ' · เพิ่มขึ้นอีก <b>' + nf(pendingMembers) + ' คน</b>ที่ยังรอจัดสรรลงมิติย่อย' : '');
 
@@ -608,7 +611,9 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     var partial = D.months.filter(function(m){ return m.partial; }).length;
     document.getElementById('hMonth').textContent =
       (partial ? 'แถบลายทางคือเดือนที่ข้อมูลยังไม่ครบเดือน · ' : '') +
-      'รายละเอียดถึง ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+      (metric==='members'
+        ? 'จำนวนสมาชิกถึง ' + D.meta.dataAsOf
+        : (metric==='money' ? 'เงินงวดแรก' : 'ค่าเฉลี่ยต่อคน') + ' ถึง ' + (D.meta.detailAsOf || D.meta.dataAsOf));
     D.months.forEach(function(m){
       var h = (val(m)/max*88)+'%';
       var c = el('div','cb'+(m.partial?' part':''));
@@ -616,7 +621,9 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       c.style.setProperty('--h', h);
       c.appendChild(el('span','cv', fmt(m)));
       c.appendChild(el('i'));
-      c.title = m.label+' 69 — '+nf(m.members)+' คน · '+nf(m.money)+' บาท'+(m.partial?' (ยังไม่ครบเดือน)':'');
+      var memberDate = m.memberAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
+      var moneyDate = m.moneyAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
+      c.title = m.label+' 69 — '+nf(m.members)+' คน (ถึง '+memberDate+') · '+nf(m.money)+' บาท (ถึง '+moneyDate+')'+(m.partial?' (ยังไม่ครบเดือน)':'');
       bars.appendChild(c);
       labs.appendChild(el('span', m.partial?'part':'', m.label));
     });
