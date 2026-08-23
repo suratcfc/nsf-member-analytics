@@ -1,8 +1,9 @@
 name: Update latest member total
 
+# dashboard.nsf.or.th blocks GitHub-hosted runners.
+# Run this manually after attaching a self-hosted runner inside a network
+# that can reach the official NSF dashboard.
 on:
-  schedule:
-    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -14,7 +15,7 @@ concurrency:
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, nsf-network]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
