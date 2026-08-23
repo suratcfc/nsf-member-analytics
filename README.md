@@ -141,14 +141,9 @@ GitHub Pages จะอัปเดตหน้าเว็บเองภาย�
 
 Dashboard แยกความสดของข้อมูลเป็น 2 ระดับเพื่อไม่ผสมตัวเลขคนละรอบประมวลผล:
 
-- **ยอดสมาชิกใหม่ล่าสุด** ดึงจาก `https://dashboard.nsf.or.th/` โดย GitHub Actions ทุกชั่วโมง
-- **รายละเอียดและตัวเลขทางการเงิน** มาจาก Tableau `VIEW_BI_DS` ตามวันที่ที่ระบุใน `meta.detailAsOf`
+- **ยอดสมาชิกใหม่ล่าสุด** ใช้ `https://dashboard.nsf.or.th/`
+- **รายละเอียดและตัวเลขทางการเงิน** ใช้ Tableau `VIEW_BI_DS` ตามวันที่ใน `meta.detailAsOf`
 
-ไฟล์ที่ใช้:
+เตรียมสคริปต์ `scripts/update-latest-members.mjs` และ Workflow `.github/workflows/update-latest-members.yml` ไว้แล้ว แต่จากการทดสอบวันที่ 23 ส.ค. 2569 พบว่า `dashboard.nsf.or.th` ไม่รับการเชื่อมต่อจาก GitHub-hosted runner (connect timeout) จึงไม่เปิดตารางเวลารายชั่วโมงเพื่อป้องกันงานล้มเหลวซ้ำ
 
-```
-scripts/update-latest-members.mjs
-.github/workflows/update-latest-members.yml
-```
-
-Workflow ใช้สิทธิ์ `GITHUB_TOKEN` ที่ GitHub จัดให้ ไม่ต้องเก็บรหัส Tableau และไม่แตะข้อมูลระดับบุคคล หากหน้าเผยแพร่ไม่มีรูปแบบหรือค่าที่คาดไว้ สคริปต์จะหยุดโดยไม่แก้ไฟล์
+หากต้องการเปิด near real-time ให้ติดตั้ง GitHub self-hosted runner ในเครือข่ายที่เข้าถึง `dashboard.nsf.or.th` ได้ ติดป้าย runner ว่า `nsf-network` แล้วเพิ่ม schedule กลับใน Workflow สคริปต์ใช้เฉพาะข้อมูลสรุปสาธารณะ ไม่ใช้รหัส Tableau และไม่แตะข้อมูลระดับบุคคล
