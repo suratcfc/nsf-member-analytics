@@ -17,9 +17,9 @@ window.NSF_DATA = {
     yearAD: 2026,
     label: "ปีปฏิทิน 2569",
     periodStart: "2026-01-01",
-    periodEnd: "2026-08-23",
-    periodLabel: "1 ม.ค. – 23 ส.ค. 2569",
-    dataAsOf: "23 ส.ค. 2569",
+    periodEnd: "2026-08-24",
+    periodLabel: "1 ม.ค. – 24 ส.ค. 2569",
+    dataAsOf: "24 ส.ค. 2569",
     detailAsOf: "11 ส.ค. 2569",
     detailMembers: 56034,
     source: "Tableau · VIEW_BI_DS",
@@ -51,7 +51,7 @@ window.NSF_DATA = {
     totalTarget: 146000,
     startDate: "2026-07-01",
     endDate: "2026-12-31",
-    asOf: "2026-08-23",
+    asOf: "2026-08-24",
     detailAsOf: "2026-08-09",
     carryOver: 46223,
     campaigns: [
@@ -75,7 +75,7 @@ window.NSF_DATA = {
     pending: {
       members: 4082,
       from: "2026-08-10",
-      to: "2026-08-23",
+      to: "2026-08-24",
       label: "รอจัดสรรเข้าแคมเปญ"
     }
   },
@@ -90,7 +90,7 @@ window.NSF_DATA = {
     { key: "2026-06", label: "มิ.ย.", members: 9306, money: 2409487 },
     { key: "2026-07", label: "ก.ค.", members: 7887, money: 2622396 },
     { key: "2026-08", label: "ส.ค.", members: 5651, money: 1126183, avgMembers: 1923,
-      memberAsOf: "23 ส.ค. 2569", moneyAsOf: "11 ส.ค. 2569", partial: true }
+      memberAsOf: "24 ส.ค. 2569", moneyAsOf: "11 ส.ค. 2569", partial: true }
   ],
 
   // ---------- ช่องทางการสมัคร ----------
