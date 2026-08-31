@@ -17,9 +17,11 @@ window.NSF_DATA = {
     yearAD: 2026,
     label: "ปีปฏิทิน 2569",
     periodStart: "2026-01-01",
-    periodEnd: "2026-08-24",
-    periodLabel: "1 ม.ค. – 24 ส.ค. 2569",
-    dataAsOf: "24 ส.ค. 2569",
+    periodEnd: "2026-08-31",
+    periodLabel: "1 ม.ค. – 31 ส.ค. 2569",
+    dataAsOf: "31 ส.ค. 2569",
+    memberBreakdownAsOf: "31 ส.ค. 2569",
+    memberBreakdownSource: "dashboard.nsf.or.th",
     detailAsOf: "11 ส.ค. 2569",
     detailMembers: 56034,
     source: "Tableau · VIEW_BI_DS",
@@ -30,7 +32,7 @@ window.NSF_DATA = {
   },
 
   totals: {
-    members: 59762,
+    members: 61447,
     money: 19698545.97,
     avg: 351.55,
     median: 50,
@@ -51,7 +53,7 @@ window.NSF_DATA = {
     totalTarget: 146000,
     startDate: "2026-07-01",
     endDate: "2026-12-31",
-    asOf: "2026-08-24",
+    asOf: "2026-08-31",
     detailAsOf: "2026-08-09",
     carryOver: 46223,
     campaigns: [
@@ -73,9 +75,9 @@ window.NSF_DATA = {
       { week: 6, end: "2026-08-09", values: { p1:1,   p2:320, p3:0, p4:0, p5:81,  p6:787,  p7:0, p8:40  } }
     ],
     pending: {
-      members: 4082,
+      members: 5767,
       from: "2026-08-10",
-      to: "2026-08-24",
+      to: "2026-08-31",
       label: "รอจัดสรรเข้าแคมเปญ"
     }
   },
@@ -89,8 +91,8 @@ window.NSF_DATA = {
     { key: "2026-05", label: "พ.ค.", members: 9731, money: 3864062 },
     { key: "2026-06", label: "มิ.ย.", members: 9306, money: 2409487 },
     { key: "2026-07", label: "ก.ค.", members: 7887, money: 2622396 },
-    { key: "2026-08", label: "ส.ค.", members: 5651, money: 1126183, avgMembers: 1923,
-      memberAsOf: "24 ส.ค. 2569", moneyAsOf: "11 ส.ค. 2569", partial: true }
+    { key: "2026-08", label: "ส.ค.", members: 7336, money: 1126183, avgMembers: 1923,
+      memberAsOf: "31 ส.ค. 2569", moneyAsOf: "11 ส.ค. 2569", partial: true }
   ],
 
   // ---------- ช่องทางการสมัคร ----------
@@ -159,51 +161,49 @@ window.NSF_DATA = {
 
   // ---------- อาชีพ ----------
   occupations: [
-    { name: "นักเรียน นิสิต นักศึกษา", members: 24426, money: 2775546 },
-    { name: "อื่นๆ", members: 11285, money: 6307545 },
-    { name: "รับจ้างทั่วไป", members: 8139, money: 1654768 },
-    { name: "เกษตรกร", members: 3170, money: 1808705 },
-    { name: "ค้าขาย", members: 2913, money: 1978690 },
-    { name: "พ่อบ้าน แม่บ้าน", members: 2531, money: 2003524 },
-    { name: "ลูกจ้างชั่วคราวราชการ/รัฐวิสาหกิจ", members: 1527, money: 602921 },
-    { name: "ผู้ประกอบวิชาชีพอิสระ", members: 1154, money: 1566445 },
-    { name: "ไม่ระบุ", members: 468, money: 603585 },
-    { name: "ลูกจ้างชั่วคราวบริษัทเอกชน", members: 421, money: 396817 }
+    { name: "นักเรียน นิสิต นักศึกษา", members: 26219, money: 2775546, avgMembers: 24426 },
+    { name: "อื่นๆ", members: 12852, money: 6911130, avgMembers: 11753 },
+    { name: "รับจ้างทั่วไป", members: 9014, money: 1654768, avgMembers: 8139 },
+    { name: "เกษตรกร", members: 3748, money: 1808705, avgMembers: 3170 },
+    { name: "ค้าขาย", members: 3319, money: 1978690, avgMembers: 2913 },
+    { name: "พ่อบ้าน แม่บ้าน", members: 2843, money: 2003524, avgMembers: 2531 },
+    { name: "ลูกจ้างชั่วคราว", members: 2158, money: 999738, avgMembers: 1948 },
+    { name: "ผู้ประกอบวิชาชีพอิสระ", members: 1294, money: 1566445, avgMembers: 1154 }
   ],
 
   // ---------- ภูมิภาค ----------
   regions: [
-    { name: "ตะวันออกเฉียงเหนือ", members: 18420, money: 4599220 },
-    { name: "กลาง", members: 17262, money: 8551753 },
-    { name: "ใต้", members: 8071, money: 1988488 },
-    { name: "เหนือ", members: 5788, money: 2189782 },
-    { name: "ตะวันออก", members: 3926, money: 1529803 },
-    { name: "ตะวันตก", members: 2567, money: 839501 }
+    { name: "ตะวันออกเฉียงเหนือ", members: 20239, money: 4599220, avgMembers: 18420 },
+    { name: "กลาง", members: 18801, money: 8551753, avgMembers: 17262 },
+    { name: "ใต้", members: 8787, money: 1988488, avgMembers: 8071 },
+    { name: "เหนือ", members: 6448, money: 2189782, avgMembers: 5788 },
+    { name: "ตะวันออก", members: 4337, money: 1529803, avgMembers: 3926 },
+    { name: "ตะวันตก", members: 2835, money: 839501, avgMembers: 2567 }
   ],
 
   // ---------- จังหวัด (20 อันดับแรก) ----------
   provinces: [
-    { name: "กรุงเทพมหานคร", members: 5573, money: 4127776 },
-    { name: "อุดรธานี", members: 1624, money: 392054 },
-    { name: "นครราชสีมา", members: 1613, money: 427199 },
-    { name: "ขอนแก่น", members: 1568, money: 455759 },
-    { name: "สกลนคร", members: 1513, money: 265056 },
-    { name: "เชียงใหม่", members: 1477, money: 814211 },
-    { name: "บุรีรัมย์", members: 1458, money: 365250 },
-    { name: "ชลบุรี", members: 1437, money: 694523 },
-    { name: "อุบลราชธานี", members: 1434, money: 437370 },
-    { name: "นครศรีธรรมราช", members: 1356, money: 251084 },
-    { name: "เชียงราย", members: 1260, money: 419216 },
-    { name: "สงขลา", members: 1255, money: 330414 },
-    { name: "ปทุมธานี", members: 1217, money: 540522 },
-    { name: "นนทบุรี", members: 1206, money: 750362 },
-    { name: "สมุทรปราการ", members: 1198, money: 572996 },
-    { name: "สุรินทร์", members: 1157, money: 378594 },
-    { name: "ร้อยเอ็ด", members: 1090, money: 246140 },
-    { name: "สุราษฎร์ธานี", members: 1070, money: 256459 },
-    { name: "ศรีสะเกษ", members: 1063, money: 254443 },
-    { name: "นครสวรรค์", members: 907, money: 223338 },
-    { name: "จังหวัดอื่นๆ (57 จังหวัด)", members: 25558, money: 7495781 }
+    { name: "กรุงเทพมหานคร", members: 5994, money: 4127776, avgMembers: 5573 },
+    { name: "นครราชสีมา", members: 1762, money: 427199, avgMembers: 1613 },
+    { name: "อุดรธานี", members: 1743, money: 392054, avgMembers: 1624 },
+    { name: "ขอนแก่น", members: 1708, money: 455759, avgMembers: 1568 },
+    { name: "อุบลราชธานี", members: 1615, money: 437370, avgMembers: 1434 },
+    { name: "บุรีรัมย์", members: 1588, money: 365250, avgMembers: 1458 },
+    { name: "สกลนคร", members: 1579, money: 265056, avgMembers: 1513 },
+    { name: "ชลบุรี", members: 1571, money: 694523, avgMembers: 1437 },
+    { name: "เชียงใหม่", members: 1571, money: 814211, avgMembers: 1477 },
+    { name: "นครศรีธรรมราช", members: 1506, money: 251084, avgMembers: 1356 },
+    { name: "ศรีสะเกษ", members: 1361, money: 254443, avgMembers: 1063 },
+    { name: "เชียงราย", members: 1361, money: 419216, avgMembers: 1260 },
+    { name: "สงขลา", members: 1344, money: 330414, avgMembers: 1255 },
+    { name: "ปทุมธานี", members: 1316, money: 540522, avgMembers: 1217 },
+    { name: "นนทบุรี", members: 1314, money: 750362, avgMembers: 1206 },
+    { name: "สมุทรปราการ", members: 1308, money: 572996, avgMembers: 1198 },
+    { name: "สุรินทร์", members: 1277, money: 378594, avgMembers: 1157 },
+    { name: "ร้อยเอ็ด", members: 1189, money: 246140, avgMembers: 1090 },
+    { name: "สุราษฎร์ธานี", members: 1179, money: 256459, avgMembers: 1070 },
+    { name: "นครสวรรค์", members: 1051, money: 223338, avgMembers: 907 },
+    { name: "จังหวัดอื่นๆ (57 จังหวัด)", members: 28110, money: 7495781, avgMembers: 25558 }
   ],
 
   // ---------- เพศ ----------
@@ -246,8 +246,8 @@ window.NSF_DATA = {
       tone: "warn"
     },
     {
-      title: "อายุ 20–24 ปี คือกลุ่มใหญ่สุดและออมน้อยสุด",
-      body: "16,884 คน (30.1%) เฉลี่ย 94 บาท/คน ต่ำกว่าทุกกลุ่ม รวมกับ 15–19 ปี = 49.2% ของสมาชิกใหม่ทั้งหมด สอดคล้องกับอาชีพนักเรียน/นักศึกษา 43.6%",
+      title: "อายุ 20–24 ปี คือกลุ่มใหญ่สุดและออมน้อยสุดในชุด Tableau",
+      body: "ใน snapshot Tableau ถึง 11 ส.ค. กลุ่มนี้มี 16,884 คน (30.1%) เฉลี่ย 94 บาท/คน ต่ำกว่าทุกกลุ่ม ส่วนข้อมูลทางการล่าสุด ณ 31 ส.ค. ระบุอาชีพนักเรียน/นักศึกษา 26,219 คน หรือ 42.7% ของสมาชิกใหม่",
       tone: "neutral"
     },
     {
@@ -256,8 +256,8 @@ window.NSF_DATA = {
       tone: "good"
     },
     {
-      title: "ภาคกลางมี 30.8% ของคน แต่ 43.4% ของเงิน",
-      body: "เฉลี่ย 495 บาท/คน เทียบกับอีสาน 250 และใต้ 246 กรุงเทพฯ จังหวัดเดียวถือเงิน 4.13 ล้านบาท = 21% ของทั้งประเทศ จากสมาชิกเพียง 9.9%",
+      title: "ภาคกลางมี 30.6% ของสมาชิกใหม่",
+      body: "ข้อมูลสมาชิกทางการ ณ 31 ส.ค. มี 18,801 คนจาก 61,447 คน ขณะที่ snapshot เงิน Tableau ถึง 11 ส.ค. ระบุว่าภาคกลางถือเงิน 43.4% กรุงเทพฯ จังหวัดเดียวมีสมาชิกใหม่ล่าสุด 5,994 คน หรือ 9.8%",
       tone: "neutral"
     },
     {
@@ -279,8 +279,9 @@ window.NSF_DATA = {
 
   // ---------- หมายเหตุ / ข้อควรระวัง ----------
   caveats: [
-    "ยอดสมาชิกใหม่บนหัวรายงานมาจาก dashboard.nsf.or.th; เดือน ส.ค. ด้านจำนวนสมาชิกรวมส่วนต่างที่เกิดหลัง 11 ส.ค. ได้ เพราะทราบว่าเกิดในเดือนเดียวกัน ส่วนช่องทาง แคมเปญ อายุ อาชีพ พื้นที่ และเงินยังใช้ Tableau ถึง 11 ส.ค. โดยไม่เดากระจายลงมิติย่อย",
-    "รายละเอียดถึง 11 ส.ค. 2569 — เดือน ส.ค. ยังไม่ครบเดือน ห้ามนำไปเทียบกับเดือนอื่นโดยตรง",
+    "ยอดสมาชิกใหม่ รายเดือน อาชีพ ภูมิภาค และจังหวัด อัปเดตจาก dashboard.nsf.or.th ถึง 31 ส.ค. 2569 และกระทบยอดรวมได้ 61,447 คนตรงกันทุกมิติ",
+    "ช่องทาง แคมเปญ อายุ เพศ สถานะ และตัวเลขทางการเงินยังเป็น snapshot Tableau ถึง 11 ส.ค. 2569; ค่าเฉลี่ย/คนในอาชีพ ภูมิภาค และจังหวัดจึงใช้ฐานสมาชิก 56,034 คนของ snapshot เดียวกับยอดเงิน ไม่ได้นำยอดสมาชิก 31 ส.ค. ไปหารเงินเก่า",
+    "เดือน ส.ค. เป็นข้อมูลที่ประมวลผลระหว่างวันที่ 31 ส.ค. จึงยังติดป้ายว่าเป็นเดือนที่ข้อมูลอาจไม่ครบทั้งวัน",
     "ป้ายกำกับ TR_CHANNEL_TYPE (แอป/โมบายแบงก์กิ้ง/เคาน์เตอร์/ตัวแทน) เป็นการตีความจากรูปแบบข้อมูล ยังไม่ได้ยืนยันกับเจ้าของข้อมูล",
     "คำอธิบายรหัส MEMBER_STATUS (A/Q/A3/R3/C/R1) เป็นการอนุมานจากการไล่ดูฟิลด์ วดป_ลาออก และ วดป_เสียชีวิต ยังไม่ได้ยืนยัน",
     "ยอดรวมรายมิติอาจต่างจากยอดรวมหลักเล็กน้อย เพราะสมาชิกบางรายมีรายการสมัครมากกว่า 1 แถว",

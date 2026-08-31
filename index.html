@@ -510,21 +510,22 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   // ---------- header numbers ----------
   var detailMembers = D.meta.detailMembers || D.totals.members;
   var pendingMembers = Math.max(0, D.totals.members - detailMembers);
+  var memberBreakdownAsOf = D.meta.memberBreakdownAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
   document.getElementById('periodLine').textContent =
     D.meta.periodLabel + ' · ยอดสมาชิกล่าสุดจาก ' + (D.meta.latestSource || D.meta.source);
   document.getElementById('asof').textContent =
-    'สมาชิก ณ ' + D.meta.dataAsOf + ' · รายละเอียด/เงิน ณ ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+    'สมาชิก/อาชีพ/พื้นที่ ณ ' + memberBreakdownAsOf + ' · เงินและมิติ Tableau ณ ' + (D.meta.detailAsOf || D.meta.dataAsOf);
   document.getElementById('fSource').textContent =
     D.meta.source + ' · ยอดสมาชิกล่าสุด: ' + (D.meta.latestSource || D.meta.source);
   document.getElementById('fDef').textContent = D.meta.definition;
   document.getElementById('fAsOf').textContent =
-    'สมาชิก ' + D.meta.dataAsOf + ' · รายละเอียดและเงิน ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+    'สมาชิก/อาชีพ/พื้นที่ ' + memberBreakdownAsOf + ' · เงินและมิติ Tableau ' + (D.meta.detailAsOf || D.meta.dataAsOf);
   document.getElementById('freshnessNote').innerHTML =
     'ยอดสมาชิกล่าสุด <b>' + nf(D.totals.members) + ' คน</b> ณ ' + D.meta.dataAsOf +
-    ' · จำนวนสมาชิกรายเดือนอัปเดตถึง <b>' + D.meta.dataAsOf + '</b>' +
-    ' · ช่องทาง แคมเปญ อายุ อาชีพ พื้นที่ และตัวเลขทางการเงินยืนยันถึง <b>' +
+    ' · จำนวนสมาชิกรายเดือน อาชีพ ภูมิภาค และจังหวัดอัปเดตถึง <b>' + memberBreakdownAsOf + '</b>' +
+    ' · ช่องทาง แคมเปญ อายุ เพศ สถานะ และตัวเลขทางการเงินยืนยันถึง <b>' +
     (D.meta.detailAsOf || D.meta.dataAsOf) + '</b> (' + nf(detailMembers) + ' คน)' +
-    (pendingMembers ? ' · เพิ่มขึ้นอีก <b>' + nf(pendingMembers) + ' คน</b>ที่ยังรอจัดสรรลงมิติย่อย' : '');
+    (pendingMembers ? ' · ยอดเพิ่มอีก <b>' + nf(pendingMembers) + ' คน</b>ยังไม่ได้แจกแจงในมิติ Tableau เหล่านี้' : '');
 
   // count-up on the big number
   (function(){
@@ -712,7 +713,13 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       if(typeof av === 'string') return state.dir * av.localeCompare(bv,'th');
       return state.dir * (av-bv);
     });
-    var totals = rows.reduce(function(s,r){ return {members:s.members+r.members, money:s.money+r.money}; }, {members:0,money:0});
+    var totals = rows.reduce(function(s,r){
+      return {
+        members:s.members+r.members,
+        money:s.money+r.money,
+        avgMembers:s.avgMembers+(r.avgMembers || r.members)
+      };
+    }, {members:0,money:0,avgMembers:0});
 
     var html = '<thead><tr>';
     cols.forEach(function(c){
@@ -754,9 +761,9 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     get:function(r){return r.money;}, fmt:function(r){return nf(r.money);},
     total:function(t){return nf(t.money);}};
   var colAvg = {key:'avg', label:'เฉลี่ย/คน', cls:'num',
-    get:function(r){return r.members ? r.money/r.members : 0;},
-    fmt:function(r){return nf(r.members ? r.money/r.members : 0);},
-    total:function(t){return nf(t.members ? t.money/t.members : 0);}};
+    get:function(r){var n=r.avgMembers || r.members; return n ? r.money/n : 0;},
+    fmt:function(r){var n=r.avgMembers || r.members; return nf(n ? r.money/n : 0);},
+    total:function(t){return nf(t.avgMembers ? t.money/t.avgMembers : 0);}};
 
   function nameCol(label,key){
     return {key:key||'name', label:label, get:function(r){return r.name||r.label;},
