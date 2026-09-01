@@ -151,3 +151,18 @@ Dashboard แยกความสดของข้อมูลตามแห�
 เตรียมสคริปต์ `scripts/update-latest-members.mjs` และ Workflow `.github/workflows/update-latest-members.yml` ไว้แล้ว แต่จากการทดสอบวันที่ 23 ส.ค. 2569 พบว่า `dashboard.nsf.or.th` ไม่รับการเชื่อมต่อจาก GitHub-hosted runner (connect timeout) จึงไม่เปิดตารางเวลารายชั่วโมงเพื่อป้องกันงานล้มเหลวซ้ำ
 
 หากต้องการเปิด near real-time ให้ติดตั้ง GitHub self-hosted runner ในเครือข่ายที่เข้าถึง `dashboard.nsf.or.th` ได้ ติดป้าย runner ว่า `nsf-network` แล้วเพิ่ม schedule กลับใน Workflow สคริปต์ใช้เฉพาะข้อมูลสรุปสาธารณะ ไม่ใช้รหัส Tableau และไม่แตะข้อมูลระดับบุคคล
+
+### เตรียมการเชื่อมต่อ Tableau Server
+
+ระบบใช้ Tableau Server `https://nsfwnbi.nsf.or.th` · site `nsf` · REST API `3.27` และ VizQL Data Service กับ published data source `VIEW_BI_DS` เท่านั้น
+
+เพิ่ม Repository secrets ที่ **Settings → Secrets and variables → Actions**:
+
+| Secret | ค่า |
+|---|---|
+| `TABLEAU_PAT_NAME` | ชื่อ Personal Access Token ที่สร้างใน Tableau |
+| `TABLEAU_PAT_SECRET` | Secret ของ Personal Access Token |
+
+ห้ามใส่ PAT ลงในไฟล์ `.env`, source code, commit, issue หรือ workflow log จากนั้นรัน Workflow **Check Tableau connection** แบบ manual หนึ่งครั้ง สคริปต์จะตรวจเฉพาะการ sign-in, สิทธิ์ API Access และการมีอยู่ของฟิลด์รวมที่อนุญาต โดยไม่ดึงข้อมูลระดับบุคคลและไม่พิมพ์ metadata ทั้งชุดลง log
+
+เมื่อ connection check ผ่านแล้ว จึงค่อยเปิด Workflow near real-time ทุก 10 นาที เพื่อไม่ให้เกิดงานล้มเหลวซ้ำในช่วงที่ runner, PAT หรือสิทธิ์ Data Source ยังไม่พร้อม

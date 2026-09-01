@@ -1,0 +1,31 @@
+name: Check Tableau connection
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-tableau-connection
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Verify PAT and aggregate-data access
+    runs-on: [self-hosted, nsf-network]
+    timeout-minutes: 5
+    env:
+      TABLEAU_SERVER_URL: https://nsfwnbi.nsf.or.th
+      TABLEAU_SITE_CONTENT_URL: nsf
+      TABLEAU_REST_API_VERSION: "3.27"
+      TABLEAU_DATASOURCE_LUID: 08ae6a5c-4b0d-418f-8881-95a11ed5ab28
+      TABLEAU_PAT_NAME: ${{ secrets.TABLEAU_PAT_NAME }}
+      TABLEAU_PAT_SECRET: ${{ secrets.TABLEAU_PAT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify Tableau connection without reading person-level rows
+        run: node scripts/check-tableau-connection.mjs
