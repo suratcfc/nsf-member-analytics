@@ -181,7 +181,11 @@ function expectSingleRow(rows, label) {
 }
 
 function numberField(row, name, label) {
-  const value = Number(row?.[name]);
+  const raw = row?.[name];
+  if (raw === null || raw === undefined || raw === "") {
+    throw new Error(`${label} is missing aggregate field ${name}`);
+  }
+  const value = Number(raw);
   if (!Number.isFinite(value)) throw new Error(`${label} is missing aggregate field ${name}`);
   return value;
 }
@@ -354,7 +358,9 @@ try {
   const followRowsCount = Math.round(numberField(follow, "rows", "Subsequent-contribution summary query"));
   const followMoney = roundMoney(numberField(follow, "money", "Subsequent-contribution summary query"));
   if (followMembers < 0 || followMembers > members || followRowsCount < followMembers || followMoney < 0) {
-    throw new Error("Subsequent-contribution aggregates failed validation");
+    throw new Error(
+      `Subsequent-contribution aggregates failed validation: members=${followMembers}, rows=${followRowsCount}, money=${followMoney}`
+    );
   }
 
   let memberDrive;
