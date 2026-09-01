@@ -536,7 +536,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     ' · มิติอื่น ' + (D.meta.detailAsOf || D.meta.dataAsOf);
   document.getElementById('freshnessNote').innerHTML =
     'ยอดรวม รายเดือน ช่องทาง และเงินงวดแรกจาก Tableau <b>' + nf(D.totals.members) + ' คน</b> ณ ' + summaryAsOf +
-    ' · จำนวนสมาชิกรายเดือน อาชีพ ภูมิภาค และจังหวัดอัปเดตถึง <b>' + memberBreakdownAsOf + '</b>' +
+    ' · อาชีพ ภูมิภาค และจังหวัดอัปเดตถึง <b>' + memberBreakdownAsOf + '</b>' +
     ' · เงินงวดถัดไป แคมเปญ อายุ เพศ สถานะ และข้อสังเกตยังเป็น snapshot ถึง <b>' +
     (D.meta.detailAsOf || D.meta.dataAsOf) + '</b> (' + nf(detailMembers) + ' คน)' +
     (pendingMembers ? ' · ยอดเพิ่มอีก <b>' + nf(pendingMembers) + ' คน</b>ยังไม่ได้แจกแจงในมิติ snapshot ที่เก่ากว่า' : '');

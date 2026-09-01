@@ -148,9 +148,9 @@ Dashboard แยกความสดของข้อมูลตามแห�
 - **ช่องทาง แคมเปญ อายุ เพศ สถานะ และตัวเลขทางการเงิน** ใช้ Tableau `VIEW_BI_DS` ตามวันที่ใน `meta.detailAsOf`
 - ถ้าจำนวนสมาชิกล่าสุดใหม่กว่ายอดเงิน แถวข้อมูลจะเก็บ `avgMembers` เป็นฐานสมาชิกของ snapshot เงิน เพื่อไม่เอาเงินเก่าไปหารด้วยจำนวนสมาชิกใหม่
 
-เตรียมสคริปต์ `scripts/update-latest-members.mjs` และ Workflow `.github/workflows/update-latest-members.yml` ไว้แล้ว แต่จากการทดสอบวันที่ 23 ส.ค. 2569 พบว่า `dashboard.nsf.or.th` ไม่รับการเชื่อมต่อจาก GitHub-hosted runner (connect timeout) จึงไม่เปิดตารางเวลารายชั่วโมงเพื่อป้องกันงานล้มเหลวซ้ำ
+ระบบ near real-time ใช้ `scripts/sync-tableau-dashboard.mjs` และ Workflow `.github/workflows/update-tableau-dashboard.yml` ทุก 10 นาที ผ่าน self-hosted runner ป้าย `nsf-network` ในเครือข่ายที่เข้าถึง Tableau ได้ ถ้า Mac ปิดอยู่ งานจะรอ runner; concurrency จะยกเลิกรอบเก่าที่ซ้ำและเก็บรอบล่าสุดไว้
 
-หากต้องการเปิด near real-time ให้ติดตั้ง GitHub self-hosted runner ในเครือข่ายที่เข้าถึง `dashboard.nsf.or.th` ได้ ติดป้าย runner ว่า `nsf-network` แล้วเพิ่ม schedule กลับใน Workflow สคริปต์ใช้เฉพาะข้อมูลสรุปสาธารณะ ไม่ใช้รหัส Tableau และไม่แตะข้อมูลระดับบุคคล
+ข้อมูลที่อัปเดตอัตโนมัติเป็น aggregate เท่านั้น ได้แก่ `totals`, `months`, `channels`, `channelTypes` และยอดรอจัดสรรใน `memberDrive` ทุกชุดต้องกระทบยอดเงินกับ summary ก่อนจึงจะเขียน `data/tableau-live.js` และ push ได้ ส่วน `followThrough`, แคมเปญ, อายุ, อาชีพ, พื้นที่, เพศ, สถานะ และข้อสังเกตยังคงวันที่ snapshot ของตนเองอย่างชัดเจน ระบบไม่ใช้ยอด `TYPE IN ('2','4')` ตรงๆ แทน follow-through เพราะชุดนั้นรวมสมาชิกเดิมทั้งกองทุน ไม่ใช่เฉพาะ cohort สมาชิกใหม่
 
 ### เตรียมการเชื่อมต่อ Tableau Server
 
@@ -165,4 +165,6 @@ Dashboard แยกความสดของข้อมูลตามแห�
 
 ห้ามใส่ PAT ลงในไฟล์ `.env`, source code, commit, issue หรือ workflow log จากนั้นรัน Workflow **Check Tableau connection** แบบ manual หนึ่งครั้ง สคริปต์จะตรวจเฉพาะการ sign-in, สิทธิ์ API Access และการมีอยู่ของฟิลด์รวมที่อนุญาต โดยไม่ดึงข้อมูลระดับบุคคลและไม่พิมพ์ metadata ทั้งชุดลง log
 
-เมื่อ connection check ผ่านแล้ว จึงค่อยเปิด Workflow near real-time ทุก 10 นาที เพื่อไม่ให้เกิดงานล้มเหลวซ้ำในช่วงที่ runner, PAT หรือสิทธิ์ Data Source ยังไม่พร้อม
+Workflow **Check Tableau connection** ตรวจ PAT, API Access และฟิลด์ aggregate โดยไม่อ่านแถวข้อมูลบุคคล ส่วน Workflow **Update dashboard from Tableau** เปิดทำงานทุก 10 นาทีแล้ว และจะ commit เฉพาะเมื่อ aggregate ที่ผ่าน validation เปลี่ยนแปลงจริง
+
+Tableau Server ส่ง certificate chain มาไม่ครบ จึงเก็บ intermediate certificate สาธารณะของ DigiCert ไว้ที่ `certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem` และโหลดด้วย `NODE_EXTRA_CA_CERTS` โดยยังเปิดการตรวจ TLS ตามปกติ ห้ามใช้ `NODE_TLS_REJECT_UNAUTHORIZED=0`
