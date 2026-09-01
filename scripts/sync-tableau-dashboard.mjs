@@ -321,7 +321,9 @@ try {
   const median = roundMoney(numberField(summary, "median", "New-member summary query"));
   const min = roundMoney(numberField(summary, "min", "New-member summary query"));
   const max = roundMoney(numberField(summary, "max", "New-member summary query"));
-  const asOf = normalizeDate(textField(summary, "asOf", "New-member summary query"), "New-member summary query");
+  const rawAsOf = textField(summary, "asOf", "New-member summary query");
+  console.log(`Tableau aggregate MAX(TR_DATE): ${rawAsOf}`);
+  const asOf = normalizeDate(rawAsOf, "New-member summary query");
 
   if (!Number.isInteger(members) || members < 1 || members > 1_000_000) {
     throw new Error("New-member total is outside the approved validation range");
