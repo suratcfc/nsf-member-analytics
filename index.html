@@ -520,7 +520,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 
   // ---------- header numbers ----------
   var detailMembers = D.meta.detailMembers || D.totals.members;
-  var summaryMembers = D.meta.summaryMembers || D.totals.members;
   var summaryAsOf = D.meta.summaryAsOf || D.meta.dataAsOf;
   var pendingMembers = Math.max(0, D.totals.members - detailMembers);
   var memberBreakdownAsOf = D.meta.memberBreakdownAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
@@ -538,7 +537,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   document.getElementById('freshnessNote').innerHTML =
     'ยอดรวม รายเดือน ช่องทาง และเงินงวดแรกจาก Tableau <b>' + nf(D.totals.members) + ' คน</b> ณ ' + summaryAsOf +
     ' · จำนวนสมาชิกรายเดือน อาชีพ ภูมิภาค และจังหวัดอัปเดตถึง <b>' + memberBreakdownAsOf + '</b>' +
-    ' · แคมเปญ อายุ เพศ สถานะ และข้อสังเกตยังเป็น snapshot ถึง <b>' +
+    ' · เงินงวดถัดไป แคมเปญ อายุ เพศ สถานะ และข้อสังเกตยังเป็น snapshot ถึง <b>' +
     (D.meta.detailAsOf || D.meta.dataAsOf) + '</b> (' + nf(detailMembers) + ' คน)' +
     (pendingMembers ? ' · ยอดเพิ่มอีก <b>' + nf(pendingMembers) + ' คน</b>ยังไม่ได้แจกแจงในมิติ snapshot ที่เก่ากว่า' : '');
 
@@ -564,13 +563,14 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 
   // ---------- follow-through rail ----------
   (function(){
-    var ft = D.followThrough, share = pct(ft.members, summaryMembers);
+    var ft = D.followThrough, share = pct(ft.members, detailMembers);
     document.getElementById('ftChip').textContent = nf(ft.rows)+' รายการ · '+nf(ft.money)+' บาท';
     document.getElementById('ftIn').textContent  = nf(ft.members)+' คน · '+share.toFixed(1)+'%';
-    document.getElementById('ftOut').textContent = 'ยังไม่ส่งต่อ '+nf(summaryMembers-ft.members)+' คน';
+    document.getElementById('ftOut').textContent = 'ยังไม่ส่งต่อ '+nf(detailMembers-ft.members)+' คน';
     document.getElementById('ftNote').innerHTML =
-      'เงินงวดถัดไปรวม <b>'+nf(ft.money)+' บาท</b> มากกว่าเงินงวดแรกของสมาชิกใหม่ทั้งหมดรวมกัน ('+nf(D.totals.money)+' บาท) '+
-      'ทั้งที่มาจากคนเพียง '+share.toFixed(1)+'% — เฉลี่ย <b>'+nf(ft.avgPerMember)+' บาท/คน</b>';
+      'เงินงวดถัดไปใน snapshot รวม <b>'+nf(ft.money)+' บาท</b> จาก '+nf(ft.members)+' คน ('+share.toFixed(1)+'%) '+
+      'เฉลี่ย <b>'+nf(ft.avgPerMember)+' บาท/คน</b> '+
+      '· snapshot ถึง '+(D.meta.detailAsOf || D.meta.dataAsOf);
     setTimeout(function(){ document.getElementById('ftFill').style.width = share+'%'; }, 260);
   })();
 

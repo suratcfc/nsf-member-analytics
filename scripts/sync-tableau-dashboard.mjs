@@ -287,7 +287,7 @@ let token;
 try {
   token = await signIn();
 
-  const [summaryRows, followRows, monthResult, channelResult, channelTypeResult] = await Promise.all([
+  const [summaryRows, monthResult, channelResult, channelTypeResult] = await Promise.all([
     queryDatasource(token, "New-member summary query", [
       calculation("members", "COUNTD([INVESTOR_CODE])"),
       calculation("money", "SUM([PRINCIPLE])"),
@@ -297,11 +297,6 @@ try {
       calculation("max", "MAX([PRINCIPLE])"),
       calculation("asOf", "MAX([TR_DATE])")
     ], ["1", "3"]),
-    queryDatasource(token, "Subsequent-contribution summary query", [
-      calculation("members", "COUNTD([INVESTOR_CODE])"),
-      calculation("rows", "COUNT([INVESTOR_CODE])"),
-      calculation("money", "SUM([PRINCIPLE])")
-    ], ["2", "4"]),
     queryDatasource(token, "Monthly aggregate query", [
       { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
@@ -320,7 +315,6 @@ try {
   ]);
 
   const summary = expectSingleRow(summaryRows, "New-member summary query");
-  const follow = expectSingleRow(followRows, "Subsequent-contribution summary query");
   const members = Math.round(numberField(summary, "members", "New-member summary query"));
   const money = roundMoney(numberField(summary, "money", "New-member summary query"));
   const avg = roundMoney(numberField(summary, "avg", "New-member summary query"));
@@ -354,15 +348,6 @@ try {
     throw new Error("Monthly member counts differ from the distinct-member total by more than 2%");
   }
 
-  const followMembers = Math.round(numberField(follow, "members", "Subsequent-contribution summary query"));
-  const followRowsCount = Math.round(numberField(follow, "rows", "Subsequent-contribution summary query"));
-  const followMoney = roundMoney(numberField(follow, "money", "Subsequent-contribution summary query"));
-  if (followMembers < 0 || followMembers > members || followRowsCount < followMembers || followMoney < 0) {
-    throw new Error(
-      `Subsequent-contribution aggregates failed validation: members=${followMembers}, rows=${followRowsCount}, money=${followMoney}`
-    );
-  }
-
   let memberDrive;
   if (base.memberDrive) {
     const allocated = (base.memberDrive.weekly || []).reduce(
@@ -392,15 +377,9 @@ try {
       summarySource: "Tableau · VIEW_BI_DS (VizQL Data Service)",
       latestSource: "Tableau · VIEW_BI_DS",
       autoRefresh: "tableau-10m",
-      liveSections: ["totals", "followThrough", "months", "channels", "channelTypes"]
+      liveSections: ["totals", "months", "channels", "channelTypes"]
     },
     totals: { members, money, avg, median, min, max },
-    followThrough: {
-      members: followMembers,
-      rows: followRowsCount,
-      money: followMoney,
-      avgPerMember: followMembers ? Math.round(followMoney / followMembers) : 0
-    },
     ...(memberDrive ? { memberDrive } : {}),
     months,
     channels,
