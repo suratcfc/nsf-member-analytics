@@ -29,6 +29,17 @@ function requireSecret(name) {
   return value;
 }
 
+function describeNetworkError(error) {
+  const details = [error?.message || "unknown network error"];
+  const causeCode = error?.cause?.code;
+  const causeMessage = error?.cause?.message;
+
+  if (causeCode) details.push(`code=${causeCode}`);
+  if (causeMessage && causeMessage !== error?.message) details.push(`cause=${causeMessage}`);
+
+  return details.join("; ");
+}
+
 async function requestJson(url, init, label) {
   let response;
   try {
@@ -42,7 +53,9 @@ async function requestJson(url, init, label) {
       }
     });
   } catch (error) {
-    throw new Error(`${label} could not reach Tableau Server: ${error.message}`);
+    // Limit diagnostics to the network error and its code. Never log request
+    // bodies, headers, PAT values, Tableau responses, or unrestricted metadata.
+    throw new Error(`${label} could not reach Tableau Server: ${describeNetworkError(error)}`);
   }
 
   const text = await response.text();
