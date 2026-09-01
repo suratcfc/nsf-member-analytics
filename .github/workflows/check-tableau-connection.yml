@@ -20,6 +20,9 @@ jobs:
       TABLEAU_SITE_CONTENT_URL: nsf
       TABLEAU_REST_API_VERSION: "3.27"
       TABLEAU_DATASOURCE_LUID: 08ae6a5c-4b0d-418f-8881-95a11ed5ab28
+      # Trust certificates approved in the macOS System Keychain. Do not use
+      # NODE_TLS_REJECT_UNAUTHORIZED=0 because TLS verification must stay on.
+      NODE_USE_SYSTEM_CA: "1"
       TABLEAU_PAT_NAME: ${{ secrets.TABLEAU_PAT_NAME }}
       TABLEAU_PAT_SECRET: ${{ secrets.TABLEAU_PAT_SECRET }}
     steps:
