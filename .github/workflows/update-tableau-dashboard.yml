@@ -1,0 +1,56 @@
+name: Update dashboard from Tableau
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nsf-tableau-dashboard-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    name: Validate aggregate data and update dashboard
+    runs-on: [self-hosted, nsf-network]
+    timeout-minutes: 10
+    env:
+      TABLEAU_SERVER_URL: https://nsfwnbi.nsf.or.th
+      TABLEAU_SITE_CONTENT_URL: nsf
+      TABLEAU_REST_API_VERSION: "3.27"
+      TABLEAU_DATASOURCE_LUID: 08ae6a5c-4b0d-418f-8881-95a11ed5ab28
+      NODE_USE_SYSTEM_CA: "1"
+      TABLEAU_PAT_NAME: ${{ secrets.TABLEAU_PAT_NAME }}
+      TABLEAU_PAT_SECRET: ${{ secrets.TABLEAU_PAT_SECRET }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - name: Query approved Tableau aggregates and validate reconciliation
+        env:
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem
+        run: node scripts/sync-tableau-dashboard.mjs
+      - name: Reject person-level fields and validate generated JavaScript
+        shell: bash
+        run: |
+          if grep -Eiq 'CITIZEN_ID|FULLNAME|EMAIL|LINE_ID|FULLADDRESS|เบอร์โทรศัพท์' data/tableau-live.js; then
+            echo "Person-level field detected; refusing to publish"
+            exit 1
+          fi
+          node --check data/tableau-live.js
+          git diff --check
+      - name: Commit changed aggregate snapshot
+        shell: bash
+        run: |
+          if git diff --quiet -- data/tableau-live.js index.html; then
+            echo "No Tableau aggregate change"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/tableau-live.js index.html
+          git commit -m "อัปเดต Dashboard จาก Tableau อัตโนมัติ"
+          git push

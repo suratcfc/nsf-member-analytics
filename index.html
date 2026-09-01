@@ -452,7 +452,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 
 <section id="ข้อสังเกต">
   <div class="wrap">
-    <div class="sec-head"><h2>ข้อสังเกต</h2><span class="hint">อ่านจากตัวเลขในหน้านี้</span></div>
+    <div class="sec-head"><h2>ข้อสังเกต</h2><span class="hint" id="findingsHint">อ่านจากตัวเลขใน snapshot</span></div>
     <div class="sec-rule"></div>
     <div class="fgrid" id="findings"></div>
 
@@ -475,11 +475,22 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 </footer>
 
 <script src="data/2569.js?v=20260831"></script>
+<script src="data/tableau-live.js?v=bootstrap"></script>
 <script>
 (function(){
   'use strict';
   var D = window.NSF_DATA;
   if(!D){ document.body.innerHTML = '<div class="wrap" style="padding:60px 22px"><h1>โหลดข้อมูลไม่สำเร็จ</h1><p>ไม่พบไฟล์ <code>data/2569.js</code></p></div>'; return; }
+  var LIVE = window.NSF_TABLEAU_LIVE;
+  if(LIVE){
+    D.meta = Object.assign({}, D.meta, LIVE.meta || {});
+    D.totals = Object.assign({}, D.totals, LIVE.totals || {});
+    D.followThrough = Object.assign({}, D.followThrough, LIVE.followThrough || {});
+    D.memberDrive = Object.assign({}, D.memberDrive, LIVE.memberDrive || {});
+    ['months','channels','channelTypes'].forEach(function(key){
+      if(Array.isArray(LIVE[key])) D[key] = LIVE[key];
+    });
+  }
 
   var PALETTE = ['--p7','--p5','--p2','--p4','--p1','--p8','--p6','--p3'];
   var metric = 'members';
@@ -509,23 +520,27 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 
   // ---------- header numbers ----------
   var detailMembers = D.meta.detailMembers || D.totals.members;
+  var summaryMembers = D.meta.summaryMembers || D.totals.members;
+  var summaryAsOf = D.meta.summaryAsOf || D.meta.dataAsOf;
   var pendingMembers = Math.max(0, D.totals.members - detailMembers);
   var memberBreakdownAsOf = D.meta.memberBreakdownAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
   document.getElementById('periodLine').textContent =
     D.meta.periodLabel + ' · ยอดสมาชิกล่าสุดจาก ' + (D.meta.latestSource || D.meta.source);
   document.getElementById('asof').textContent =
-    'สมาชิก/อาชีพ/พื้นที่ ณ ' + memberBreakdownAsOf + ' · เงินและมิติ Tableau ณ ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+    'ยอดรวม/รายเดือน/ช่องทาง Tableau ณ ' + summaryAsOf + ' · อาชีพ/พื้นที่ ณ ' + memberBreakdownAsOf +
+    ' · มิติอื่น ณ ' + (D.meta.detailAsOf || D.meta.dataAsOf);
   document.getElementById('fSource').textContent =
-    D.meta.source + ' · ยอดสมาชิกล่าสุด: ' + (D.meta.latestSource || D.meta.source);
+    (D.meta.summarySource || D.meta.source) + ' · มิติ snapshot: ' + D.meta.source;
   document.getElementById('fDef').textContent = D.meta.definition;
   document.getElementById('fAsOf').textContent =
-    'สมาชิก/อาชีพ/พื้นที่ ' + memberBreakdownAsOf + ' · เงินและมิติ Tableau ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+    'ยอดรวม/รายเดือน/ช่องทาง ' + summaryAsOf + ' · อาชีพ/พื้นที่ ' + memberBreakdownAsOf +
+    ' · มิติอื่น ' + (D.meta.detailAsOf || D.meta.dataAsOf);
   document.getElementById('freshnessNote').innerHTML =
-    'ยอดสมาชิกล่าสุด <b>' + nf(D.totals.members) + ' คน</b> ณ ' + D.meta.dataAsOf +
+    'ยอดรวม รายเดือน ช่องทาง และเงินงวดแรกจาก Tableau <b>' + nf(D.totals.members) + ' คน</b> ณ ' + summaryAsOf +
     ' · จำนวนสมาชิกรายเดือน อาชีพ ภูมิภาค และจังหวัดอัปเดตถึง <b>' + memberBreakdownAsOf + '</b>' +
-    ' · ช่องทาง แคมเปญ อายุ เพศ สถานะ และตัวเลขทางการเงินยืนยันถึง <b>' +
+    ' · แคมเปญ อายุ เพศ สถานะ และข้อสังเกตยังเป็น snapshot ถึง <b>' +
     (D.meta.detailAsOf || D.meta.dataAsOf) + '</b> (' + nf(detailMembers) + ' คน)' +
-    (pendingMembers ? ' · ยอดเพิ่มอีก <b>' + nf(pendingMembers) + ' คน</b>ยังไม่ได้แจกแจงในมิติ Tableau เหล่านี้' : '');
+    (pendingMembers ? ' · ยอดเพิ่มอีก <b>' + nf(pendingMembers) + ' คน</b>ยังไม่ได้แจกแจงในมิติ snapshot ที่เก่ากว่า' : '');
 
   // count-up on the big number
   (function(){
@@ -542,17 +557,17 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   document.getElementById('kMoney').textContent  = nf(D.totals.money);
   document.getElementById('kMedian').textContent = nf(D.totals.median);
   document.getElementById('kAvg').textContent    = nf(D.totals.avg,2);
-  var detailNote = 'ข้อมูลถึง ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+  var detailNote = 'ข้อมูลถึง ' + summaryAsOf;
   document.getElementById('kMoneyNote').textContent = 'บาท · ' + detailNote;
   document.getElementById('kMedianNote').textContent = 'เท่ากับขั้นต่ำที่สมัครได้ · ' + detailNote;
   document.getElementById('kAvgNote').textContent = 'ถูกดึงขึ้นโดยคนส่วนน้อย · ' + detailNote;
 
   // ---------- follow-through rail ----------
   (function(){
-    var ft = D.followThrough, share = pct(ft.members, detailMembers);
+    var ft = D.followThrough, share = pct(ft.members, summaryMembers);
     document.getElementById('ftChip').textContent = nf(ft.rows)+' รายการ · '+nf(ft.money)+' บาท';
     document.getElementById('ftIn').textContent  = nf(ft.members)+' คน · '+share.toFixed(1)+'%';
-    document.getElementById('ftOut').textContent = 'ยังไม่ส่งต่อ '+nf(detailMembers-ft.members)+' คน';
+    document.getElementById('ftOut').textContent = 'ยังไม่ส่งต่อ '+nf(summaryMembers-ft.members)+' คน';
     document.getElementById('ftNote').innerHTML =
       'เงินงวดถัดไปรวม <b>'+nf(ft.money)+' บาท</b> มากกว่าเงินงวดแรกของสมาชิกใหม่ทั้งหมดรวมกัน ('+nf(D.totals.money)+' บาท) '+
       'ทั้งที่มาจากคนเพียง '+share.toFixed(1)+'% — เฉลี่ย <b>'+nf(ft.avgPerMember)+' บาท/คน</b>';
@@ -613,8 +628,8 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     document.getElementById('hMonth').textContent =
       (partial ? 'แถบลายทางคือเดือนที่ข้อมูลยังไม่ครบเดือน · ' : '') +
       (metric==='members'
-        ? 'จำนวนสมาชิกถึง ' + D.meta.dataAsOf
-        : (metric==='money' ? 'เงินงวดแรก' : 'ค่าเฉลี่ยต่อคน') + ' ถึง ' + (D.meta.detailAsOf || D.meta.dataAsOf));
+        ? 'จำนวนสมาชิกถึง ' + summaryAsOf
+        : (metric==='money' ? 'เงินงวดแรก' : 'ค่าเฉลี่ยต่อคน') + ' ถึง ' + summaryAsOf);
     D.months.forEach(function(m){
       var h = (val(m)/max*88)+'%';
       var c = el('div','cb'+(m.partial?' part':''));
@@ -801,6 +816,8 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 
   // ---------- findings + caveats (render once) ----------
   (function(){
+    document.getElementById('findingsHint').textContent =
+      'วิเคราะห์จาก snapshot ถึง ' + (D.meta.detailAsOf || D.meta.dataAsOf);
     var f = document.getElementById('findings');
     D.findings.forEach(function(x){
       var c = el('div','card fcard '+(x.tone||'neutral'));
@@ -809,6 +826,11 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       f.appendChild(c);
     });
     var u = document.getElementById('caveats');
+    if(D.meta.summaryAsOf){
+      u.appendChild(el('li','',
+        'ยอดรวม รายเดือน ช่องทาง และเงินอัปเดตอัตโนมัติจาก Tableau ถึง ' + summaryAsOf +
+        '; ข้อสังเกตและมิติอื่นยังอ้างอิง snapshot ตามวันที่ที่ระบุ ไม่ได้คำนวณใหม่โดยการคาดเดา'));
+    }
     D.caveats.forEach(function(t){ u.appendChild(el('li','',t)); });
   })();
 
