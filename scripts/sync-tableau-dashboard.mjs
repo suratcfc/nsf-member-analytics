@@ -255,21 +255,21 @@ function monthlyRows(rows, asOf, label = "Monthly query", minDate = PERIOD_START
     .sort((a, b) => a.key.localeCompare(b.key));
 }
 
-function dailyRows(rows, asOf) {
+function dailyRows(rows, asOf, label = "Daily query", minDate = PERIOD_START, maxDate = PERIOD_END) {
   const byDate = new Map();
   for (const row of rows) {
-    const date = normalizeDate(textField(row, "date", "Daily query"), "Daily query");
-    if (date > asOf) throw new Error("Daily query returned a date after the Tableau as-of date");
-    if (byDate.has(date)) throw new Error(`Daily query returned duplicate aggregate rows for ${date}`);
-    const members = Math.round(numberField(row, "members", "Daily query"));
+    const date = normalizeDate(textField(row, "date", label), label, minDate, maxDate);
+    if (date > asOf) throw new Error(`${label} returned a date after the Tableau as-of date`);
+    if (byDate.has(date)) throw new Error(`${label} returned duplicate aggregate rows for ${date}`);
+    const members = Math.round(numberField(row, "members", label));
     if (!Number.isInteger(members) || members < 0) {
-      throw new Error(`Daily query returned an invalid member count for ${date}`);
+      throw new Error(`${label} returned an invalid member count for ${date}`);
     }
     byDate.set(date, members);
   }
 
   const daily = [];
-  const cursor = new Date(`${PERIOD_START}T00:00:00Z`);
+  const cursor = new Date(`${minDate}T00:00:00Z`);
   const last = new Date(`${asOf}T00:00:00Z`);
   while (cursor <= last) {
     const date = cursor.toISOString().slice(0, 10);
@@ -336,7 +336,7 @@ try {
   const asOf = normalizeDate(rawAsOf, "New-member summary query");
   const priorAsOf = `${PRIOR_YEAR_AD}${asOf.slice(4)}`;
 
-  const [monthResult, dailyResult, channelResult, channelTypeResult, priorSummaryRows, priorMonthResult] = await Promise.all([
+  const [monthResult, dailyResult, channelResult, channelTypeResult, priorSummaryRows, priorMonthResult, priorDailyResult] = await Promise.all([
     queryDatasource(token, "Monthly aggregate query", [
       { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
@@ -363,6 +363,10 @@ try {
       { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
       { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
+    ], ["1", "3"], { minDate: PRIOR_PERIOD_START, maxDate: priorAsOf }),
+    queryDatasource(token, "Prior-year daily aggregate query", [
+      { fieldCaption: "TR_DATE", function: "TRUNC_DAY", fieldAlias: "date", sortPriority: 1 },
+      { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" }
     ], ["1", "3"], { minDate: PRIOR_PERIOD_START, maxDate: priorAsOf })
   ]);
 
@@ -388,10 +392,17 @@ try {
     PRIOR_PERIOD_START,
     priorAsOf
   );
+  const priorDaily = dailyRows(
+    priorDailyResult,
+    priorAsOf,
+    "Prior-year daily query",
+    PRIOR_PERIOD_START,
+    priorAsOf
+  );
   const daily = dailyRows(dailyResult, asOf);
   const channels = channelRows(channelResult);
   const channelTypes = channelTypeRows(channelTypeResult);
-  if (!months.length || !priorMonths.length || !daily.length || !channels.length || !channelTypes.length) {
+  if (!months.length || !priorMonths.length || !daily.length || !priorDaily.length || !channels.length || !channelTypes.length) {
     throw new Error("One or more approved aggregate breakdowns returned no rows");
   }
   if (!Number.isInteger(priorMembers) || priorMembers < 1 || priorMembers > 1_000_000) {
@@ -417,6 +428,9 @@ try {
   }
   if (Math.abs(sum(priorMonths, "members") - priorMembers) > Math.max(10, priorMembers * 0.02)) {
     throw new Error("Prior-year monthly member counts differ from the prior-year distinct-member total by more than 2%");
+  }
+  if (Math.abs(sum(priorDaily, "members") - sum(priorMonths, "members")) > Math.max(10, priorMembers * 0.02)) {
+    throw new Error("Prior-year daily member counts differ from the prior-year monthly member counts by more than 2%");
   }
 
   let memberDrive;
@@ -450,7 +464,7 @@ try {
       autoRefresh: "tableau-10m",
       comparisonAsOf: thaiDate(priorAsOf),
       comparisonBasis: "เดือนที่จบแล้วเทียบเต็มเดือน; เดือนล่าสุดเทียบถึงวันที่เดียวกันของทั้งสองปี",
-      liveSections: ["totals", "months", "priorMonths", "daily", "channels", "channelTypes"]
+      liveSections: ["totals", "months", "priorMonths", "daily", "priorDaily", "channels", "channelTypes"]
     },
     totals: { members, money, avg, median, min, max },
     priorYear: { year: PRIOR_YEAR_BE, asOf: priorAsOf, members: priorMembers },
@@ -458,6 +472,7 @@ try {
     months,
     priorMonths,
     daily,
+    priorDaily,
     channels,
     channelTypes
   };
