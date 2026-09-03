@@ -11,8 +11,11 @@ const DEFAULTS = {
 
 const YEAR_AD = 2026;
 const YEAR_BE = YEAR_AD + 543;
+const PRIOR_YEAR_AD = YEAR_AD - 1;
+const PRIOR_YEAR_BE = PRIOR_YEAR_AD + 543;
 const PERIOD_START = `${YEAR_AD}-01-01`;
 const PERIOD_END = `${YEAR_AD}-12-31`;
+const PRIOR_PERIOD_START = `${PRIOR_YEAR_AD}-01-01`;
 const DATA_FILE = new URL("../data/2569.js", import.meta.url);
 const LIVE_FILE = new URL("../data/tableau-live.js", import.meta.url);
 const INDEX_FILE = new URL("../index.html", import.meta.url);
@@ -137,7 +140,7 @@ function calculation(fieldCaption, formula) {
   return { fieldCaption, fieldAlias: fieldCaption, calculation: formula };
 }
 
-function periodFilters(types) {
+function periodFilters(types, minDate = PERIOD_START, maxDate = PERIOD_END) {
   return [
     {
       field: { fieldCaption: "TYPE" },
@@ -149,13 +152,13 @@ function periodFilters(types) {
       field: { fieldCaption: "TR_DATE" },
       filterType: "QUANTITATIVE_DATE",
       quantitativeFilterType: "RANGE",
-      minDate: PERIOD_START,
-      maxDate: PERIOD_END
+      minDate,
+      maxDate
     }
   ];
 }
 
-async function queryDatasource(token, label, fields, types) {
+async function queryDatasource(token, label, fields, types, range = {}) {
   const body = await requestJson(
     `${serverUrl}/api/v1/vizql-data-service/query-datasource`,
     {
@@ -163,7 +166,7 @@ async function queryDatasource(token, label, fields, types) {
       headers: { "X-Tableau-Auth": token },
       body: JSON.stringify({
         datasource: { datasourceLuid },
-        query: { fields, filters: periodFilters(types) },
+        query: { fields, filters: periodFilters(types, range.minDate, range.maxDate) },
         options: { debug: false, disaggregate: false, returnFormat: "OBJECTS" }
       })
     },
@@ -199,11 +202,11 @@ function textField(row, name, label) {
   return String(value).trim() || "ไม่ระบุ";
 }
 
-function normalizeDate(value, label) {
+function normalizeDate(value, label, minDate = PERIOD_START, maxDate = PERIOD_END) {
   const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!match) throw new Error(`${label} returned an invalid maximum TR_DATE`);
   const iso = `${match[1]}-${match[2]}-${match[3]}`;
-  if (iso < PERIOD_START || iso > PERIOD_END) throw new Error(`${label} returned TR_DATE outside ${YEAR_AD}`);
+  if (iso < minDate || iso > maxDate) throw new Error(`${label} returned TR_DATE outside the approved range`);
   return iso;
 }
 
@@ -233,17 +236,17 @@ function loadBaseData(source) {
   return context.window.NSF_DATA;
 }
 
-function monthlyRows(rows, asOf) {
+function monthlyRows(rows, asOf, label = "Monthly query", minDate = PERIOD_START, maxDate = PERIOD_END) {
   return rows
     .map((row) => {
-      const monthDate = normalizeDate(textField(row, "month", "Monthly query"), "Monthly query");
+      const monthDate = normalizeDate(textField(row, "month", label), label, minDate, maxDate);
       const key = monthDate.slice(0, 7);
       const monthIndex = Number(key.slice(5, 7)) - 1;
       return {
         key,
         label: THAI_MONTHS[monthIndex],
-        members: Math.round(numberField(row, "members", "Monthly query")),
-        money: roundMoney(numberField(row, "money", "Monthly query")),
+        members: Math.round(numberField(row, "members", label)),
+        money: roundMoney(numberField(row, "money", label)),
         memberAsOf: thaiDate(asOf),
         moneyAsOf: thaiDate(asOf),
         ...(key === asOf.slice(0, 7) ? { partial: true } : {})
@@ -311,16 +314,29 @@ let token;
 try {
   token = await signIn();
 
-  const [summaryRows, monthResult, dailyResult, channelResult, channelTypeResult] = await Promise.all([
-    queryDatasource(token, "New-member summary query", [
-      calculation("members", "COUNTD([INVESTOR_CODE])"),
-      calculation("money", "SUM([PRINCIPLE])"),
-      calculation("avg", "AVG([PRINCIPLE])"),
-      calculation("median", "MEDIAN([PRINCIPLE])"),
-      calculation("min", "MIN([PRINCIPLE])"),
-      calculation("max", "MAX([PRINCIPLE])"),
-      calculation("asOf", "MAX([TR_DATE])")
-    ], ["1", "3"]),
+  const summaryRows = await queryDatasource(token, "New-member summary query", [
+    calculation("members", "COUNTD([INVESTOR_CODE])"),
+    calculation("money", "SUM([PRINCIPLE])"),
+    calculation("avg", "AVG([PRINCIPLE])"),
+    calculation("median", "MEDIAN([PRINCIPLE])"),
+    calculation("min", "MIN([PRINCIPLE])"),
+    calculation("max", "MAX([PRINCIPLE])"),
+    calculation("asOf", "MAX([TR_DATE])")
+  ], ["1", "3"]);
+
+  const summary = expectSingleRow(summaryRows, "New-member summary query");
+  const members = Math.round(numberField(summary, "members", "New-member summary query"));
+  const money = roundMoney(numberField(summary, "money", "New-member summary query"));
+  const avg = roundMoney(numberField(summary, "avg", "New-member summary query"));
+  const median = roundMoney(numberField(summary, "median", "New-member summary query"));
+  const min = roundMoney(numberField(summary, "min", "New-member summary query"));
+  const max = roundMoney(numberField(summary, "max", "New-member summary query"));
+  const rawAsOf = textField(summary, "asOf", "New-member summary query");
+  console.log(`Tableau aggregate MAX(TR_DATE): ${rawAsOf}`);
+  const asOf = normalizeDate(rawAsOf, "New-member summary query");
+  const priorAsOf = `${PRIOR_YEAR_AD}${asOf.slice(4)}`;
+
+  const [monthResult, dailyResult, channelResult, channelTypeResult, priorSummaryRows, priorMonthResult] = await Promise.all([
     queryDatasource(token, "Monthly aggregate query", [
       { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
@@ -339,19 +355,16 @@ try {
       { fieldCaption: "TR_CHANNEL_TYPE", fieldAlias: "code" },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
       { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
-    ], ["1", "3"])
+    ], ["1", "3"]),
+    queryDatasource(token, "Prior-year summary query", [
+      calculation("members", "COUNTD([INVESTOR_CODE])")
+    ], ["1", "3"], { minDate: PRIOR_PERIOD_START, maxDate: priorAsOf }),
+    queryDatasource(token, "Prior-year monthly aggregate query", [
+      { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
+      { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
+      { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
+    ], ["1", "3"], { minDate: PRIOR_PERIOD_START, maxDate: priorAsOf })
   ]);
-
-  const summary = expectSingleRow(summaryRows, "New-member summary query");
-  const members = Math.round(numberField(summary, "members", "New-member summary query"));
-  const money = roundMoney(numberField(summary, "money", "New-member summary query"));
-  const avg = roundMoney(numberField(summary, "avg", "New-member summary query"));
-  const median = roundMoney(numberField(summary, "median", "New-member summary query"));
-  const min = roundMoney(numberField(summary, "min", "New-member summary query"));
-  const max = roundMoney(numberField(summary, "max", "New-member summary query"));
-  const rawAsOf = textField(summary, "asOf", "New-member summary query");
-  console.log(`Tableau aggregate MAX(TR_DATE): ${rawAsOf}`);
-  const asOf = normalizeDate(rawAsOf, "New-member summary query");
 
   if (!Number.isInteger(members) || members < 1 || members > 1_000_000) {
     throw new Error("New-member total is outside the approved validation range");
@@ -366,12 +379,33 @@ try {
   assertClose(avg, money / members, 0.1, "Average first contribution");
 
   const months = monthlyRows(monthResult, asOf);
+  const priorSummary = expectSingleRow(priorSummaryRows, "Prior-year summary query");
+  const priorMembers = Math.round(numberField(priorSummary, "members", "Prior-year summary query"));
+  const priorMonths = monthlyRows(
+    priorMonthResult,
+    priorAsOf,
+    "Prior-year monthly query",
+    PRIOR_PERIOD_START,
+    priorAsOf
+  );
   const daily = dailyRows(dailyResult, asOf);
   const channels = channelRows(channelResult);
   const channelTypes = channelTypeRows(channelTypeResult);
-  if (!months.length || !daily.length || !channels.length || !channelTypes.length) {
+  if (!months.length || !priorMonths.length || !daily.length || !channels.length || !channelTypes.length) {
     throw new Error("One or more approved aggregate breakdowns returned no rows");
   }
+  if (!Number.isInteger(priorMembers) || priorMembers < 1 || priorMembers > 1_000_000) {
+    throw new Error("Prior-year member total is outside the approved validation range");
+  }
+  if (priorMonths.length !== months.length) {
+    throw new Error("Prior-year comparison did not return the same number of calendar months");
+  }
+  months.forEach((month) => {
+    const monthNumber = month.key.slice(5, 7);
+    if (!priorMonths.some((prior) => prior.key.slice(5, 7) === monthNumber)) {
+      throw new Error(`Prior-year comparison is missing calendar month ${monthNumber}`);
+    }
+  });
   assertClose(roundMoney(sum(months, "money")), money, 1, "Monthly money");
   assertClose(roundMoney(sum(channels, "money")), money, 1, "Channel money");
   assertClose(roundMoney(sum(channelTypes, "money")), money, 1, "Channel-type money");
@@ -380,6 +414,9 @@ try {
   }
   if (Math.abs(sum(daily, "members") - sum(months, "members")) > Math.max(10, members * 0.02)) {
     throw new Error("Daily member counts differ from the monthly member counts by more than 2%");
+  }
+  if (Math.abs(sum(priorMonths, "members") - priorMembers) > Math.max(10, priorMembers * 0.02)) {
+    throw new Error("Prior-year monthly member counts differ from the prior-year distinct-member total by more than 2%");
   }
 
   let memberDrive;
@@ -411,11 +448,15 @@ try {
       summarySource: "Tableau · VIEW_BI_DS (VizQL Data Service)",
       latestSource: "Tableau · VIEW_BI_DS",
       autoRefresh: "tableau-10m",
-      liveSections: ["totals", "months", "daily", "channels", "channelTypes"]
+      comparisonAsOf: thaiDate(priorAsOf),
+      comparisonBasis: "เดือนที่จบแล้วเทียบเต็มเดือน; เดือนล่าสุดเทียบถึงวันที่เดียวกันของทั้งสองปี",
+      liveSections: ["totals", "months", "priorMonths", "daily", "channels", "channelTypes"]
     },
     totals: { members, money, avg, median, min, max },
+    priorYear: { year: PRIOR_YEAR_BE, asOf: priorAsOf, members: priorMembers },
     ...(memberDrive ? { memberDrive } : {}),
     months,
+    priorMonths,
     daily,
     channels,
     channelTypes

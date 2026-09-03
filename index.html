@@ -169,7 +169,11 @@ tbody tr:last-child td{border-bottom:0}
 
 /* ---------- month chart ---------- */
 .chart{padding:26px 24px 18px}
+.month-legend{display:none;align-items:center;gap:18px;flex-wrap:wrap;margin:-4px 0 14px;font-size:12px;color:var(--muted)}
+.month-legend.show{display:flex}
+.month-legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:7px;vertical-align:-1px}
 .cbars{display:grid;grid-template-columns:repeat(var(--n,8),1fr);gap:10px;align-items:end;height:230px}
+.cbars.compare{height:270px}
 .cb{position:relative;display:flex;flex-direction:column;justify-content:flex-end;height:100%;cursor:default}
 .cb i{display:block;width:100%;height:0;border-radius:7px 7px 0 0;background:linear-gradient(180deg,var(--accent),var(--accent-2));transition:height .85s cubic-bezier(.2,.7,.3,1),background .15s,box-shadow .15s}
 .cb.part i{background:repeating-linear-gradient(135deg,var(--accent) 0 7px,var(--accent-2) 7px 14px)}
@@ -180,6 +184,19 @@ tbody tr:last-child td{border-bottom:0}
   opacity:0;transition:opacity .3s .5s
 }
 .cb.show .cv{opacity:1}
+.cb.cmp{padding-top:34px}
+.cbpair{display:flex;align-items:flex-end;gap:5px;height:100%}
+.cbseries{position:relative;display:flex;flex:1;flex-direction:column;justify-content:flex-end;height:100%;min-width:0}
+.cbpair .cbseries.prior i{background:#536B80}
+.cbpair .cbseries.current i{background:linear-gradient(180deg,var(--accent),var(--accent-2))}
+.cbpair .cbseries.current.part i{background:repeating-linear-gradient(135deg,var(--accent) 0 7px,var(--accent-2) 7px 14px)}
+.cbpair .cv{font-size:9.5px;bottom:calc(var(--h,0%) + 6px)}
+.cb.cmp:hover .cbseries.prior i{background:#6F879B;box-shadow:none}
+.cb.cmp:hover .cbseries.current i{background:var(--gold);box-shadow:0 0 18px rgba(227,182,85,.26)}
+.cb .yoy{position:absolute;top:0;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;font-weight:600;white-space:nowrap;padding:2px 7px;border-radius:999px;background:var(--paper-2)}
+.cb .yoy.up{color:var(--ahead)}
+.cb .yoy.down{color:var(--behind)}
+.cb .yoy.flat{color:var(--muted)}
 .cxs{display:grid;grid-template-columns:repeat(var(--n,8),1fr);gap:10px;margin-top:10px;font-size:12px;color:var(--muted);text-align:center;font-family:var(--mono)}
 .cxs span.part{color:var(--gold)}
 
@@ -361,6 +378,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     <div class="sec-head"><h2>รายเดือน</h2><span class="hint" id="hMonth"></span></div>
     <div class="sec-rule"></div>
     <div class="card chart">
+      <div class="month-legend" id="monthLegend"></div>
       <div class="cbars" id="monthBars"></div>
       <div class="cxs" id="monthLabs"></div>
     </div>
@@ -515,7 +533,8 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     D.totals = Object.assign({}, D.totals, LIVE.totals || {});
     D.followThrough = Object.assign({}, D.followThrough, LIVE.followThrough || {});
     D.memberDrive = Object.assign({}, D.memberDrive, LIVE.memberDrive || {});
-    ['months','daily','channels','channelTypes'].forEach(function(key){
+    D.priorYear = Object.assign({}, D.priorYear, LIVE.priorYear || {});
+    ['months','priorMonths','daily','channels','channelTypes'].forEach(function(key){
       if(Array.isArray(LIVE[key])) D[key] = LIVE[key];
     });
   }
@@ -627,40 +646,78 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     es.forEach(function(e){
       if(!e.isIntersecting) return;
       e.target.querySelectorAll('.bf').forEach(function(f){ f.style.width = f.getAttribute('data-w'); });
-      e.target.querySelectorAll('.cb').forEach(function(c){ c.classList.add('show'); c.querySelector('i').style.height = c.getAttribute('data-h'); });
+      e.target.querySelectorAll('.cb').forEach(function(c){
+        c.classList.add('show');
+        c.querySelectorAll('i').forEach(function(bar){ bar.style.height = bar.getAttribute('data-h') || c.getAttribute('data-h'); });
+      });
       io.unobserve(e.target);
     });
   },{threshold:.12}) : null;
   function reveal(node){
     if(!io){ node.querySelectorAll('.bf').forEach(function(f){ f.style.width=f.getAttribute('data-w'); });
-             node.querySelectorAll('.cb').forEach(function(c){ c.classList.add('show'); c.querySelector('i').style.height=c.getAttribute('data-h'); });
+             node.querySelectorAll('.cb').forEach(function(c){
+               c.classList.add('show');
+               c.querySelectorAll('i').forEach(function(bar){ bar.style.height=bar.getAttribute('data-h') || c.getAttribute('data-h'); });
+             });
              return; }
     io.observe(node);
   }
 
   // ---------- month chart ----------
   function renderMonths(){
-    var bars = document.getElementById('monthBars'), labs = document.getElementById('monthLabs');
+    var bars = document.getElementById('monthBars'), labs = document.getElementById('monthLabs'), legend=document.getElementById('monthLegend');
     bars.innerHTML = ''; labs.innerHTML = '';
     bars.style.setProperty('--n', D.months.length);
     labs.style.setProperty('--n', D.months.length);
-    var max = Math.max.apply(null, D.months.map(val)) || 1;
+    var compare = metric==='members' && Array.isArray(D.priorMonths) && D.priorMonths.length;
+    bars.classList.toggle('compare',!!compare);
+    legend.classList.toggle('show',!!compare);
+    legend.innerHTML=compare
+      ? '<span><i style="background:linear-gradient(180deg,var(--accent),var(--accent-2))"></i>ปี 2569</span><span><i style="background:#536B80"></i>ปี 2568</span><span>ป้ายสีเขียว/แดง = เปลี่ยนแปลงจากปีก่อน</span>'
+      : '';
+    var values=D.months.map(val);
+    if(compare) values=values.concat(D.priorMonths.map(function(m){return m.members;}));
+    var max = Math.max.apply(null, values) || 1;
     var partial = D.months.filter(function(m){ return m.partial; }).length;
     document.getElementById('hMonth').textContent =
-      (partial ? 'แถบลายทางคือเดือนที่ข้อมูลยังไม่ครบเดือน · ' : '') +
-      (metric==='members'
+      (compare
+        ? 'สมาชิกใหม่ปี 2569 เทียบปี 2568 · เดือนล่าสุดเทียบถึงวันที่เดียวกันของทั้งสองปี'
+        : (partial ? 'แถบลายทางคือเดือนที่ข้อมูลยังไม่ครบเดือน · ' : '') +
+          (metric==='members'
         ? 'จำนวนสมาชิกถึง ' + summaryAsOf
-        : (metric==='money' ? 'เงินงวดแรก' : 'ค่าเฉลี่ยต่อคน') + ' ถึง ' + summaryAsOf);
+        : (metric==='money' ? 'เงินงวดแรก' : 'ค่าเฉลี่ยต่อคน') + ' ถึง ' + summaryAsOf));
     D.months.forEach(function(m){
-      var h = (val(m)/max*88)+'%';
-      var c = el('div','cb'+(m.partial?' part':''));
-      c.setAttribute('data-h', h);
-      c.style.setProperty('--h', h);
-      c.appendChild(el('span','cv', fmt(m)));
-      c.appendChild(el('i'));
       var memberDate = m.memberAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
       var moneyDate = m.moneyAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
-      c.title = m.label+' 69 — '+nf(m.members)+' คน (ถึง '+memberDate+') · '+nf(m.money)+' บาท (ถึง '+moneyDate+')'+(m.partial?' (ยังไม่ครบเดือน)':'');
+      var c;
+      if(compare){
+        var prior=D.priorMonths.find(function(p){return p.key.slice(5,7)===m.key.slice(5,7);});
+        var yoy=prior && prior.members ? (m.members-prior.members)/prior.members*100 : null;
+        var yoyText=yoy==null?'—':(yoy>0?'+':'')+nf(yoy,1)+'%';
+        var tone=yoy==null||Math.abs(yoy)<0.05?'flat':(yoy>0?'up':'down');
+        var currentH=(m.members/max*76)+'%', priorH=(prior.members/max*76)+'%';
+        c=el('div','cb cmp');
+        c.appendChild(el('span','yoy '+tone,yoyText));
+        var pair=el('div','cbpair');
+        var priorSeries=el('span','cbseries prior');
+        priorSeries.style.setProperty('--h',priorH);
+        priorSeries.appendChild(el('span','cv',nf(prior.members)));
+        var priorBar=el('i'); priorBar.setAttribute('data-h',priorH); priorSeries.appendChild(priorBar);
+        var currentSeries=el('span','cbseries current'+(m.partial?' part':''));
+        currentSeries.style.setProperty('--h',currentH);
+        currentSeries.appendChild(el('span','cv',nf(m.members)));
+        var currentBar=el('i'); currentBar.setAttribute('data-h',currentH); currentSeries.appendChild(currentBar);
+        pair.appendChild(priorSeries); pair.appendChild(currentSeries); c.appendChild(pair);
+        c.title=m.label+' — ปี 2569 '+nf(m.members)+' คน · ปี 2568 '+nf(prior.members)+' คน · เปลี่ยนแปลง '+yoyText+(m.partial?' (เทียบถึงวันเดียวกัน)':'');
+      }else{
+        var h = (val(m)/max*88)+'%';
+        c = el('div','cb'+(m.partial?' part':''));
+        c.setAttribute('data-h', h);
+        c.style.setProperty('--h', h);
+        c.appendChild(el('span','cv', fmt(m)));
+        c.appendChild(el('i'));
+        c.title = m.label+' 69 — '+nf(m.members)+' คน (ถึง '+memberDate+') · '+nf(m.money)+' บาท (ถึง '+moneyDate+')'+(m.partial?' (ยังไม่ครบเดือน)':'');
+      }
       bars.appendChild(c);
       labs.appendChild(el('span', m.partial?'part':'', m.label));
     });
