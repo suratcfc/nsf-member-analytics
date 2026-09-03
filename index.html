@@ -200,11 +200,31 @@ tbody tr:last-child td{border-bottom:0}
 .drive-svg .note{fill:var(--ink-soft);font-family:var(--body);font-size:11.5px}
 .drive-note{margin:12px 0 0;font-size:12.5px;color:var(--muted)}
 .drive-note b{color:var(--ink);font-weight:600}
-.weekly-table th{cursor:default;white-space:normal;line-height:1.3;min-width:96px}
-.weekly-table th:first-child{min-width:170px}
-.weekly-table td:first-child{min-width:170px}
-.weekly-table .pending td{color:var(--gold);background:rgba(227,182,85,.06)}
-.weekly-table .zero{color:var(--muted)}
+
+/* ---------- daily member chart ---------- */
+.daily-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.daily-kpi{padding:17px 20px}
+.daily-kpi .cap{font-size:12px;color:var(--muted)}
+.daily-kpi .num{font-family:var(--mono);font-size:25px;font-weight:600;color:var(--ink);line-height:1.25;margin-top:3px}
+.daily-kpi .note{font-size:11.5px;color:var(--muted);margin-top:4px}
+.daily-panel{padding:20px 22px 16px;overflow:hidden}
+.daily-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.daily-tabs{display:flex;gap:7px;overflow-x:auto;padding:2px 1px 5px;scrollbar-width:thin}
+.daily-tab{border:1px solid var(--line);border-radius:999px;background:var(--paper-2);color:var(--muted);font-family:var(--body);font-size:12px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.daily-tab:hover,.daily-tab:focus-visible{color:var(--ink);border-color:var(--accent)}
+.daily-tab[aria-selected="true"]{background:var(--gold);border-color:var(--gold);color:var(--on-accent);font-weight:600}
+.daily-month-label{font-family:var(--display);font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap}
+.daily-chart-scroll{overflow-x:auto}
+.daily-svg{display:block;width:100%;height:auto;min-width:780px}
+.daily-svg .grid{stroke:var(--line);stroke-width:1}
+.daily-svg .axis{fill:var(--muted);font-family:var(--mono);font-size:11px}
+.daily-svg .daily-bar rect{fill:var(--accent);transition:fill .15s,opacity .15s}
+.daily-svg .daily-bar text.value{fill:var(--ink-soft);font-family:var(--mono);font-size:9.5px}
+.daily-svg .daily-bar.peak rect{fill:var(--gold)}
+.daily-svg .daily-bar:hover rect{fill:var(--ahead)}
+.daily-svg .daily-bar:hover text.value{fill:var(--ink)}
+.daily-foot{margin:12px 0 0;font-size:12px;color:var(--muted)}
+.daily-foot b{color:var(--ink);font-weight:600}
 
 /* ---------- split / donut ---------- */
 .split2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
@@ -246,6 +266,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   .cbars{height:180px}
   .cxs{font-size:10.5px}
   .drive-summary{grid-template-columns:1fr}
+  .daily-summary{grid-template-columns:1fr}
   .drive-chart{overflow-x:auto}
 }
 @media (prefers-reduced-motion:reduce){
@@ -362,9 +383,21 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     </div>
 
     <div style="height:20px"></div>
-    <div class="sec-head"><h2 style="font-size:18px">ข้อมูลรายสัปดาห์แยกตามแคมเปญ</h2><span class="hint">ใช้ชื่อแคมเปญแทนรหัส P1–P8</span></div>
+    <div class="sec-head"><h2 style="font-size:18px">สมาชิกใหม่เพิ่มขึ้นรายวัน</h2><span class="hint" id="dailyHint">ตั้งแต่ 1 ม.ค. 2569 · เลือกเดือนเพื่อดูทุกวัน</span></div>
     <div class="sec-rule"></div>
-    <div class="card tblwrap"><table class="weekly-table" id="weeklyCampaignTable"></table></div>
+    <div class="daily-summary">
+      <div class="card daily-kpi"><div class="cap">รวมเดือนที่เลือก</div><div class="num" id="dailyMonthTotal">—</div><div class="note" id="dailyMonthRange"></div></div>
+      <div class="card daily-kpi"><div class="cap">เฉลี่ยต่อวัน</div><div class="num" id="dailyAverage">—</div><div class="note">รวมวันที่ไม่มีสมาชิกใหม่ด้วย</div></div>
+      <div class="card daily-kpi"><div class="cap">วันที่เพิ่มสูงสุด</div><div class="num" id="dailyPeak">—</div><div class="note" id="dailyPeakDate"></div></div>
+    </div>
+    <div class="card daily-panel">
+      <div class="daily-toolbar">
+        <div class="daily-tabs" id="dailyMonthTabs" role="tablist" aria-label="เลือกเดือน"></div>
+        <div class="daily-month-label" id="dailyMonthLabel"></div>
+      </div>
+      <div class="daily-chart-scroll"><svg class="daily-svg" id="dailyChart" viewBox="0 0 1000 360" role="img" aria-label="กราฟจำนวนสมาชิกใหม่รายวัน"></svg></div>
+      <p class="daily-foot" id="dailyFootnote"></p>
+    </div>
   </div>
 </section>
 
@@ -482,7 +515,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     D.totals = Object.assign({}, D.totals, LIVE.totals || {});
     D.followThrough = Object.assign({}, D.followThrough, LIVE.followThrough || {});
     D.memberDrive = Object.assign({}, D.memberDrive, LIVE.memberDrive || {});
-    ['months','channels','channelTypes'].forEach(function(key){
+    ['months','daily','channels','channelTypes'].forEach(function(key){
       if(Array.isArray(LIVE[key])) D[key] = LIVE[key];
     });
   }
@@ -634,7 +667,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     reveal(bars);
   }
 
-  // ---------- member-drive target trend + weekly campaign table ----------
+  // ---------- member-drive target trend ----------
   function renderMemberDrive(){
     var md = D.memberDrive;
     if(!md) return;
@@ -695,16 +728,75 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       ' + จัดสรรตามแคมเปญถึง '+thaiDate(md.detailAsOf)+' จำนวน '+nf(allocated)+
       (md.pending && md.pending.members?' + รอจัดสรรเข้าแคมเปญ '+nf(md.pending.members):'')+' คน';
 
-    var totals={}; md.campaigns.forEach(function(c){totals[c.key]=0;});
-    var head='<thead><tr><th>สัปดาห์สิ้นสุด</th>'+md.campaigns.map(function(c){return '<th title="'+c.full+'">'+c.name+'</th>';}).join('')+'<th>รวม</th></tr></thead>';
-    var rows=md.weekly.map(function(w){
-      var cells=md.campaigns.map(function(c){var v=w.values[c.key]||0; totals[c.key]+=v; return '<td class="num '+(v===0?'zero':'')+'">'+nf(v)+'</td>';}).join('');
-      return '<tr><td>สัปดาห์ที่ '+w.week+' · '+thaiDate(w.end)+'</td>'+cells+'<td class="num"><b>'+nf(weekTotal(w))+'</b></td></tr>';
-    }).join('');
-    var pending=md.pending && md.pending.members ? '<tr class="pending"><td>'+thaiDate(md.pending.from)+' – '+thaiDate(md.pending.to)+' · '+md.pending.label+'</td>'+md.campaigns.map(function(){return '<td>—</td>';}).join('')+'<td class="num"><b>'+nf(md.pending.members)+'</b></td></tr>' : '';
-    var grand=allocated+(md.pending?md.pending.members:0);
-    var foot='<tfoot><tr class="tfoot"><td>รวมช่วงแผน</td>'+md.campaigns.map(function(c){return '<td class="num">'+nf(totals[c.key])+'</td>';}).join('')+'<td class="num">'+nf(grand)+'</td></tr></tfoot>';
-    document.getElementById('weeklyCampaignTable').innerHTML=head+'<tbody>'+rows+pending+'</tbody>'+foot;
+  }
+
+  // ---------- daily new members ----------
+  var dailySelectedMonth = null;
+  function renderDailyMembers(){
+    if(!Array.isArray(D.daily) || !D.daily.length){
+      document.getElementById('dailyHint').textContent='กำลังรอข้อมูลรายวันจาก Tableau';
+      document.getElementById('dailyChart').innerHTML='<text class="axis" x="500" y="180" text-anchor="middle">ยังไม่มีข้อมูลรายวัน</text>';
+      return;
+    }
+    var monthNames=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    var monthShort=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    var months=[];
+    D.daily.forEach(function(r){
+      var key=r.date.slice(0,7);
+      if(months.indexOf(key)<0) months.push(key);
+    });
+    if(!dailySelectedMonth || months.indexOf(dailySelectedMonth)<0) dailySelectedMonth=months[months.length-1];
+
+    var tabs=document.getElementById('dailyMonthTabs');
+    tabs.innerHTML='';
+    months.forEach(function(key){
+      var mi=Number(key.slice(5,7))-1;
+      var b=el('button','daily-tab',monthShort[mi]);
+      b.type='button'; b.setAttribute('role','tab');
+      b.setAttribute('aria-selected',String(key===dailySelectedMonth));
+      b.onclick=function(){ dailySelectedMonth=key; renderDailyMembers(); };
+      tabs.appendChild(b);
+    });
+
+    var rows=D.daily.filter(function(r){return r.date.slice(0,7)===dailySelectedMonth;});
+    var monthIndex=Number(dailySelectedMonth.slice(5,7))-1;
+    var total=rows.reduce(function(s,r){return s+r.members;},0);
+    var peak=rows.reduce(function(best,r){return !best || r.members>best.members?r:best;},null);
+    var firstDay=Number(rows[0].date.slice(8,10));
+    var lastDay=Number(rows[rows.length-1].date.slice(8,10));
+    var isPartial=rows[rows.length-1].date===D.meta.periodEnd;
+    document.getElementById('dailyMonthTotal').textContent=nf(total)+' คน';
+    document.getElementById('dailyMonthRange').textContent=firstDay+'–'+lastDay+' '+monthShort[monthIndex]+' 2569'+(isPartial?' · เดือนยังไม่ครบ':'');
+    document.getElementById('dailyAverage').textContent=nf(total/rows.length,1)+' คน';
+    document.getElementById('dailyPeak').textContent=nf(peak.members)+' คน';
+    document.getElementById('dailyPeakDate').textContent=Number(peak.date.slice(8,10))+' '+monthShort[monthIndex]+' 2569';
+    document.getElementById('dailyMonthLabel').textContent=monthNames[monthIndex]+' 2569';
+    document.getElementById('dailyHint').textContent='1 ม.ค. – '+D.meta.dataAsOf+' · นับสมาชิกไม่ซ้ำภายในแต่ละวัน';
+
+    var W=1000,H=360,L=58,R=18,T=28,B=42;
+    var max=Math.max.apply(null,rows.map(function(r){return r.members;}))||1;
+    var plotW=W-L-R, plotH=H-T-B, slot=plotW/rows.length, barW=Math.max(8,slot*.66);
+    function y(v){return H-B-plotH*v/max;}
+    var svg='';
+    for(var i=0;i<=4;i++){
+      var tick=max*i/4, yy=y(tick);
+      svg+='<line class="grid" x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'"></line>'+
+           '<text class="axis" x="'+(L-10)+'" y="'+(yy+4)+'" text-anchor="end">'+nf(tick)+'</text>';
+    }
+    rows.forEach(function(r,i){
+      var day=Number(r.date.slice(8,10)), cx=L+slot*i+slot/2;
+      var top=y(r.members), height=Math.max(r.members?2:0,H-B-top);
+      var cls='daily-bar'+(r===peak?' peak':'');
+      svg+='<g class="'+cls+'"><title>'+day+' '+monthShort[monthIndex]+' 2569 — '+nf(r.members)+' คน</title>'+
+           '<rect x="'+(cx-barW/2)+'" y="'+(H-B-height)+'" width="'+barW+'" height="'+height+'" rx="3"></rect>'+
+           '<text class="value" x="'+cx+'" y="'+Math.max(13,H-B-height-6)+'" text-anchor="middle">'+nf(r.members)+'</text>'+
+           '<text class="axis" x="'+cx+'" y="'+(H-18)+'" text-anchor="middle">'+day+'</text></g>';
+    });
+    var chart=document.getElementById('dailyChart');
+    chart.setAttribute('aria-label','กราฟสมาชิกใหม่รายวัน เดือน'+monthNames[monthIndex]+' 2569 รวม '+nf(total)+' คน');
+    chart.innerHTML=svg;
+    document.getElementById('dailyFootnote').innerHTML=
+      'แท่งสีทองคือวันที่เพิ่มสูงสุด · แสดงทุกวันตั้งแต่ 1 ม.ค. 2569 ถึงข้อมูลล่าสุด โดยวันที่ไม่มีสมาชิกใหม่แสดงเป็น <b>0 คน</b>';
   }
 
   // ---------- sortable table ----------
@@ -826,6 +918,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   function renderAll(){
     renderMonths();
     renderMemberDrive();
+    renderDailyMembers();
     renderBars(document.getElementById('chBars'), D.channels);
     renderBars(document.getElementById('ctBars'), D.channelTypes.map(function(c){
       return {name:c.code+' · '+c.label, members:c.members, money:c.money};

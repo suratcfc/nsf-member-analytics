@@ -252,6 +252,30 @@ function monthlyRows(rows, asOf) {
     .sort((a, b) => a.key.localeCompare(b.key));
 }
 
+function dailyRows(rows, asOf) {
+  const byDate = new Map();
+  for (const row of rows) {
+    const date = normalizeDate(textField(row, "date", "Daily query"), "Daily query");
+    if (date > asOf) throw new Error("Daily query returned a date after the Tableau as-of date");
+    if (byDate.has(date)) throw new Error(`Daily query returned duplicate aggregate rows for ${date}`);
+    const members = Math.round(numberField(row, "members", "Daily query"));
+    if (!Number.isInteger(members) || members < 0) {
+      throw new Error(`Daily query returned an invalid member count for ${date}`);
+    }
+    byDate.set(date, members);
+  }
+
+  const daily = [];
+  const cursor = new Date(`${PERIOD_START}T00:00:00Z`);
+  const last = new Date(`${asOf}T00:00:00Z`);
+  while (cursor <= last) {
+    const date = cursor.toISOString().slice(0, 10);
+    daily.push({ date, members: byDate.get(date) || 0 });
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return daily;
+}
+
 function channelRows(rows) {
   return rows
     .map((row) => {
@@ -287,7 +311,7 @@ let token;
 try {
   token = await signIn();
 
-  const [summaryRows, monthResult, channelResult, channelTypeResult] = await Promise.all([
+  const [summaryRows, monthResult, dailyResult, channelResult, channelTypeResult] = await Promise.all([
     queryDatasource(token, "New-member summary query", [
       calculation("members", "COUNTD([INVESTOR_CODE])"),
       calculation("money", "SUM([PRINCIPLE])"),
@@ -301,6 +325,10 @@ try {
       { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
       { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
+    ], ["1", "3"]),
+    queryDatasource(token, "Daily aggregate query", [
+      { fieldCaption: "TR_DATE", function: "TRUNC_DAY", fieldAlias: "date", sortPriority: 1 },
+      { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" }
     ], ["1", "3"]),
     queryDatasource(token, "Channel aggregate query", [
       { fieldCaption: "TR_CHANNEL_NAME", fieldAlias: "name" },
@@ -338,9 +366,10 @@ try {
   assertClose(avg, money / members, 0.1, "Average first contribution");
 
   const months = monthlyRows(monthResult, asOf);
+  const daily = dailyRows(dailyResult, asOf);
   const channels = channelRows(channelResult);
   const channelTypes = channelTypeRows(channelTypeResult);
-  if (!months.length || !channels.length || !channelTypes.length) {
+  if (!months.length || !daily.length || !channels.length || !channelTypes.length) {
     throw new Error("One or more approved aggregate breakdowns returned no rows");
   }
   assertClose(roundMoney(sum(months, "money")), money, 1, "Monthly money");
@@ -348,6 +377,9 @@ try {
   assertClose(roundMoney(sum(channelTypes, "money")), money, 1, "Channel-type money");
   if (Math.abs(sum(months, "members") - members) > Math.max(10, members * 0.02)) {
     throw new Error("Monthly member counts differ from the distinct-member total by more than 2%");
+  }
+  if (Math.abs(sum(daily, "members") - sum(months, "members")) > Math.max(10, members * 0.02)) {
+    throw new Error("Daily member counts differ from the monthly member counts by more than 2%");
   }
 
   let memberDrive;
@@ -379,11 +411,12 @@ try {
       summarySource: "Tableau · VIEW_BI_DS (VizQL Data Service)",
       latestSource: "Tableau · VIEW_BI_DS",
       autoRefresh: "tableau-10m",
-      liveSections: ["totals", "months", "channels", "channelTypes"]
+      liveSections: ["totals", "months", "daily", "channels", "channelTypes"]
     },
     totals: { members, money, avg, median, min, max },
     ...(memberDrive ? { memberDrive } : {}),
     months,
+    daily,
     channels,
     channelTypes
   };
