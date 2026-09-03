@@ -95,9 +95,6 @@ a{color:var(--ink)}
 .eyebrow{font-family:var(--display);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:0 0 12px;font-weight:600}
 .hero h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,4.4vw,44px);line-height:1.12;margin:0 0 8px;color:var(--ink);letter-spacing:-.01em}
 .hero .period{color:var(--muted);font-size:14.5px;margin:0 0 34px}
-.freshness{margin:-14px 0 26px;padding:12px 15px;border:1px solid rgba(227,182,85,.35);border-radius:10px;background:rgba(227,182,85,.07);color:var(--muted);font-size:12.8px}
-.freshness b{color:var(--ink);font-weight:600}
-
 .headline{display:flex;flex-wrap:wrap;align-items:flex-end;gap:26px 46px;margin-bottom:30px}
 .bignum{font-family:var(--mono);font-weight:600;font-size:clamp(46px,8vw,74px);line-height:1;letter-spacing:-.03em;color:var(--ink)}
 .bignum small{font-size:.3em;font-family:var(--body);font-weight:400;color:var(--muted);margin-left:12px;letter-spacing:0}
@@ -309,8 +306,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
         <div class="note" id="kAvgNote">ถูกดึงขึ้นโดยคนส่วนน้อย</div>
       </div>
     </div>
-    <p class="freshness" id="freshnessNote"></p>
-
     <div class="rail">
       <div class="rail-head">
         <span>สมาชิกใหม่ปีนี้ที่ส่งเงินงวดถัดไปแล้ว</span>
@@ -521,7 +516,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   // ---------- header numbers ----------
   var detailMembers = D.meta.detailMembers || D.totals.members;
   var summaryAsOf = D.meta.summaryAsOf || D.meta.dataAsOf;
-  var pendingMembers = Math.max(0, D.totals.members - detailMembers);
   var memberBreakdownAsOf = D.meta.memberBreakdownAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
   document.getElementById('periodLine').textContent =
     D.meta.periodLabel + ' · ยอดสมาชิกล่าสุดจาก ' + (D.meta.latestSource || D.meta.source);
@@ -534,12 +528,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   document.getElementById('fAsOf').textContent =
     'ยอดรวม/รายเดือน/ช่องทาง ' + summaryAsOf + ' · อาชีพ/พื้นที่ ' + memberBreakdownAsOf +
     ' · มิติอื่น ' + (D.meta.detailAsOf || D.meta.dataAsOf);
-  document.getElementById('freshnessNote').innerHTML =
-    'ยอดรวม รายเดือน ช่องทาง และเงินงวดแรกจาก Tableau <b>' + nf(D.totals.members) + ' คน</b> ณ ' + summaryAsOf +
-    ' · อาชีพ ภูมิภาค และจังหวัดอัปเดตถึง <b>' + memberBreakdownAsOf + '</b>' +
-    ' · เงินงวดถัดไป แคมเปญ อายุ เพศ สถานะ และข้อสังเกตยังเป็น snapshot ถึง <b>' +
-    (D.meta.detailAsOf || D.meta.dataAsOf) + '</b> (' + nf(detailMembers) + ' คน)' +
-    (pendingMembers ? ' · ยอดเพิ่มอีก <b>' + nf(pendingMembers) + ' คน</b>ยังไม่ได้แจกแจงในมิติ snapshot ที่เก่ากว่า' : '');
 
   // count-up on the big number
   (function(){
