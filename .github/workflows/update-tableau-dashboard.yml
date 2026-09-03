@@ -7,16 +7,19 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: nsf-tableau-dashboard-update
-  cancel-in-progress: true
+  # Keep the active retry alive when a newer scheduled run arrives. GitHub keeps
+  # at most one additional run pending in this concurrency group.
+  cancel-in-progress: false
 
 jobs:
   update:
     name: Validate aggregate data and update dashboard
     runs-on: [self-hosted, nsf-network]
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       TABLEAU_SERVER_URL: https://nsfwnbi.nsf.or.th
       TABLEAU_SITE_CONTENT_URL: nsf
@@ -34,7 +37,28 @@ jobs:
       - name: Query approved Tableau aggregates and validate reconciliation
         env:
           NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem
-        run: node scripts/sync-tableau-dashboard.mjs
+        shell: bash
+        run: |
+          max_attempts=8
+          attempt=1
+
+          while true; do
+            echo "Tableau sync attempt ${attempt}/${max_attempts}"
+            if node scripts/sync-tableau-dashboard.mjs; then
+              break
+            fi
+
+            if (( attempt >= max_attempts )); then
+              echo "Tableau remained unavailable after ${max_attempts} attempts"
+              exit 1
+            fi
+
+            delay=$((attempt * 30))
+            if (( delay > 120 )); then delay=120; fi
+            echo "Retrying after ${delay} seconds"
+            sleep "${delay}"
+            attempt=$((attempt + 1))
+          done
       - name: Reject person-level fields and validate generated JavaScript
         shell: bash
         run: |
@@ -56,3 +80,16 @@ jobs:
           git add data/tableau-live.js index.html
           git commit -m "อัปเดต Dashboard จาก Tableau อัตโนมัติ"
           git push
+
+  notify:
+    name: Notify when Tableau sync needs attention
+    if: ${{ always() && needs.update.result != 'cancelled' }}
+    needs: update
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TABLEAU_SYNC_RESULT: ${{ needs.update.result }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Open or resolve the deduplicated GitHub issue
+        run: node scripts/notify-tableau-sync.mjs

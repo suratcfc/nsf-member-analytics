@@ -148,7 +148,7 @@ Dashboard แยกความสดของข้อมูลตามแห�
 - **ช่องทาง แคมเปญ อายุ เพศ สถานะ และตัวเลขทางการเงิน** ใช้ Tableau `VIEW_BI_DS` ตามวันที่ใน `meta.detailAsOf`
 - ถ้าจำนวนสมาชิกล่าสุดใหม่กว่ายอดเงิน แถวข้อมูลจะเก็บ `avgMembers` เป็นฐานสมาชิกของ snapshot เงิน เพื่อไม่เอาเงินเก่าไปหารด้วยจำนวนสมาชิกใหม่
 
-ระบบ near real-time ใช้ `scripts/sync-tableau-dashboard.mjs` และ Workflow `.github/workflows/update-tableau-dashboard.yml` ทุก 10 นาที ผ่าน self-hosted runner ป้าย `nsf-network` ในเครือข่ายที่เข้าถึง Tableau ได้ ถ้า Mac ปิดอยู่ งานจะรอ runner; concurrency จะยกเลิกรอบเก่าที่ซ้ำและเก็บรอบล่าสุดไว้
+ระบบ near real-time ใช้ `scripts/sync-tableau-dashboard.mjs` และ Workflow `.github/workflows/update-tableau-dashboard.yml` ตามตารางทุก 10 นาที ผ่าน self-hosted runner ป้าย `nsf-network` ในเครือข่ายที่เข้าถึง Tableau ได้ ตารางของ GitHub อาจเริ่มช้ากว่าเวลาที่กำหนดและระบบนี้จึงไม่ใช่ real-time แท้ ถ้า Mac ปิดอยู่ งานจะรอ runner; concurrency จะปล่อยให้รอบที่กำลัง retry ทำงานต่อ และเก็บรอบล่าสุดอีกหนึ่งรอบไว้รอ
 
 ข้อมูลที่อัปเดตอัตโนมัติเป็น aggregate เท่านั้น ได้แก่ `totals`, `months`, `channels`, `channelTypes` และยอดรอจัดสรรใน `memberDrive` ทุกชุดต้องกระทบยอดเงินกับ summary ก่อนจึงจะเขียน `data/tableau-live.js` และ push ได้ ส่วน `followThrough`, แคมเปญ, อายุ, อาชีพ, พื้นที่, เพศ, สถานะ และข้อสังเกตยังคงวันที่ snapshot ของตนเองอย่างชัดเจน ระบบไม่ใช้ยอด `TYPE IN ('2','4')` ตรงๆ แทน follow-through เพราะชุดนั้นรวมสมาชิกเดิมทั้งกองทุน ไม่ใช่เฉพาะ cohort สมาชิกใหม่
 
@@ -165,6 +165,12 @@ Dashboard แยกความสดของข้อมูลตามแห�
 
 ห้ามใส่ PAT ลงในไฟล์ `.env`, source code, commit, issue หรือ workflow log จากนั้นรัน Workflow **Check Tableau connection** แบบ manual หนึ่งครั้ง สคริปต์จะตรวจเฉพาะการ sign-in, สิทธิ์ API Access และการมีอยู่ของฟิลด์รวมที่อนุญาต โดยไม่ดึงข้อมูลระดับบุคคลและไม่พิมพ์ metadata ทั้งชุดลง log
 
-Workflow **Check Tableau connection** ตรวจ PAT, API Access และฟิลด์ aggregate โดยไม่อ่านแถวข้อมูลบุคคล ส่วน Workflow **Update dashboard from Tableau** เปิดทำงานทุก 10 นาทีแล้ว และจะ commit เฉพาะเมื่อ aggregate ที่ผ่าน validation เปลี่ยนแปลงจริง
+Workflow **Check Tableau connection** ตรวจ PAT, API Access และฟิลด์ aggregate โดยไม่อ่านแถวข้อมูลบุคคล ส่วน Workflow **Update dashboard from Tableau** เปิดทำงานตามตารางทุก 10 นาทีแล้ว จะ retry การเชื่อมต่อชั่วคราวนานประมาณ 11 นาที และจะ commit เฉพาะเมื่อ aggregate ที่ผ่าน validation เปลี่ยนแปลงจริง หากยังล้มเหลว ระบบจะเปิด GitHub issue ชื่อ `[Dashboard] Tableau sync unavailable` เพียงรายการเดียวและปิดให้อัตโนมัติเมื่อรอบถัดไปสำเร็จ
+
+### รันทันทีเมื่อ Mac หรือเครือข่ายกลับมา
+
+สคริปต์ `scripts/dispatch-tableau-sync-on-network-recovery.sh` ตรวจทุก 60 วินาทีว่า hostname ของ Tableau กลับมา resolve เป็น private IP และเปิดพอร์ต 443 ได้หรือไม่ เมื่อเปิด Mac ใหม่หรือสถานะเปลี่ยนจากเข้าไม่ได้เป็นเข้าได้ สคริปต์จะสั่ง Workflow ทันทีผ่าน GitHub CLI โดยไม่เก็บ Tableau PAT หรือ GitHub token ลงในรีโป
+
+เครื่องที่ติดตั้ง monitor ต้องยืนยัน GitHub CLI หนึ่งครั้งด้วย `gh auth login --hostname github.com --web` จากนั้นติดตั้ง LaunchAgent จาก `config/com.suratcfc.nsf-dashboard-network-monitor.plist.example` โดยแทน `__SCRIPT_PATH__` และ `__LOG_DIR__` ด้วย absolute path ของเครื่องนั้น
 
 Tableau Server ส่ง certificate chain มาไม่ครบ จึงเก็บ intermediate certificate สาธารณะของ DigiCert ไว้ที่ `certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem` และโหลดด้วย `NODE_EXTRA_CA_CERTS` โดยยังเปิดการตรวจ TLS ตามปกติ ห้ามใช้ `NODE_TLS_REJECT_UNAUTHORIZED=0`
