@@ -426,11 +426,17 @@ try {
   if (Math.abs(sum(daily, "members") - sum(months, "members")) > Math.max(10, members * 0.02)) {
     throw new Error("Daily member counts differ from the monthly member counts by more than 2%");
   }
+  if (sum(daily, "members") !== members) {
+    throw new Error("Current-year daily member counts do not exactly reconcile with the distinct-member total");
+  }
   if (Math.abs(sum(priorMonths, "members") - priorMembers) > Math.max(10, priorMembers * 0.02)) {
     throw new Error("Prior-year monthly member counts differ from the prior-year distinct-member total by more than 2%");
   }
   if (Math.abs(sum(priorDaily, "members") - sum(priorMonths, "members")) > Math.max(10, priorMembers * 0.02)) {
     throw new Error("Prior-year daily member counts differ from the prior-year monthly member counts by more than 2%");
+  }
+  if (sum(priorDaily, "members") !== priorMembers) {
+    throw new Error("Prior-year daily member counts do not exactly reconcile with the prior-year distinct-member total");
   }
 
   let memberDrive;

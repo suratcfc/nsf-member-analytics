@@ -771,27 +771,39 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     svg+='<circle cx="'+x(start)+'" cy="'+y(md.carryOver)+'" r="4" fill="'+cssvar('--gold')+'"></circle>'+
          '<text class="note" x="'+(x(start)+10)+'" y="'+(y(md.carryOver)-10)+'">ยอดยกมา '+nf(md.carryOver)+'</text>';
 
-    var run=md.carryOver, pts=[[x(start),y(run)]];
-    md.weekly.forEach(function(w){ run+=weekTotal(w); pts.push([x(dateOnly(w.end)),y(run)]); });
-    if(md.pending && md.pending.members){ run+=md.pending.members; pts.push([x(asof),y(run)]); }
+    function weeklyCumulative(rows, sourceYear){
+      if(!Array.isArray(rows) || !rows.length) return null;
+      var startKey=sourceYear+'-'+String(start.getUTCMonth()+1).padStart(2,'0')+'-'+String(start.getUTCDate()).padStart(2,'0');
+      var running=rows.reduce(function(total,row){ return total+(row.date<startKey?Number(row.members||0):0); },0);
+      var points=[[x(start),y(running)]];
+      rows.forEach(function(row){
+        if(row.date<startKey) return;
+        var a=row.date.split('-').map(Number);
+        var mapped=new Date(Date.UTC(start.getUTCFullYear(),a[1]-1,a[2]));
+        if(mapped<start || mapped>asof) return;
+        running+=Number(row.members||0);
+        if(mapped.getUTCDay()===0 || mapped.getTime()===asof.getTime()) points.push([x(mapped),y(running)]);
+      });
+      return {points:points,total:running};
+    }
+
+    var currentSeries=weeklyCumulative(D.daily,start.getUTCFullYear());
+    var run=md.carryOver, pts;
+    if(currentSeries){
+      pts=currentSeries.points;
+    }else{
+      pts=[[x(start),y(run)]];
+      md.weekly.forEach(function(w){ run+=weekTotal(w); pts.push([x(dateOnly(w.end)),y(run)]); });
+      if(md.pending && md.pending.members){ run+=md.pending.members; pts.push([x(asof),y(run)]); }
+    }
     svg+='<polyline fill="none" stroke="'+cssvar('--accent')+'" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" points="'+pts.map(function(p){return p.join(',');}).join(' ')+'"></polyline>';
     pts.slice(1).forEach(function(p){ svg+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5" fill="'+cssvar('--surface')+'" stroke="'+cssvar('--accent')+'" stroke-width="3"></circle>'; });
 
     var priorTotal=null, priorPts=[];
-    if(Array.isArray(D.priorDaily) && D.priorDaily.length){
-      var priorYear=start.getUTCFullYear()-1;
-      var priorStartKey=priorYear+'-'+String(start.getUTCMonth()+1).padStart(2,'0')+'-'+String(start.getUTCDate()).padStart(2,'0');
-      var priorRun=D.priorDaily.reduce(function(total,row){ return total+(row.date<priorStartKey?Number(row.members||0):0); },0);
-      priorPts.push([x(start),y(priorRun)]);
-      D.priorDaily.forEach(function(row){
-        if(row.date<priorStartKey) return;
-        var a=row.date.split('-').map(Number);
-        var mapped=new Date(Date.UTC(start.getUTCFullYear(),a[1]-1,a[2]));
-        if(mapped<start || mapped>asof) return;
-        priorRun+=Number(row.members||0);
-        if(mapped.getUTCDay()===0 || mapped.getTime()===asof.getTime()) priorPts.push([x(mapped),y(priorRun)]);
-      });
-      priorTotal=priorRun;
+    var priorSeries=weeklyCumulative(D.priorDaily,start.getUTCFullYear()-1);
+    if(priorSeries){
+      priorPts=priorSeries.points;
+      priorTotal=priorSeries.total;
       if(priorPts.length>1){
         svg+='<polyline fill="none" stroke="#91A6B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="'+priorPts.map(function(p){return p.join(',');}).join(' ')+'"><title>ผลจริงสะสมปี 2568 ถึงวันเดียวกัน '+nf(priorTotal)+' คน</title></polyline>';
         var priorLast=priorPts[priorPts.length-1];
