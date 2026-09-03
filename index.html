@@ -281,6 +281,9 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   .bar{grid-template-columns:1fr;gap:5px}
   .bar .bv{text-align:left;min-width:0}
   .cbars{height:180px}
+  .chart:has(.cbars.compare){overflow-x:auto}
+  .month-legend:has(+ .cbars.compare),.cbars.compare,.cbars.compare + .cxs{min-width:720px}
+  .cbars.compare{height:220px}
   .cxs{font-size:10.5px}
   .drive-summary{grid-template-columns:1fr}
   .daily-summary{grid-template-columns:1fr}
