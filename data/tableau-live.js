@@ -9,9 +9,12 @@ window.NSF_TABLEAU_LIVE = {
     "summarySource": "Tableau · VIEW_BI_DS (VizQL Data Service)",
     "latestSource": "Tableau · VIEW_BI_DS",
     "autoRefresh": "tableau-10m",
+    "comparisonAsOf": "1 ก.ย. 2568",
+    "comparisonBasis": "เดือนที่จบแล้วเทียบเต็มเดือน; เดือนล่าสุดเทียบถึงวันที่เดียวกันของทั้งสองปี",
     "liveSections": [
       "totals",
       "months",
+      "priorMonths",
       "daily",
       "channels",
       "channelTypes"
@@ -24,6 +27,11 @@ window.NSF_TABLEAU_LIVE = {
     "median": 50,
     "min": 50,
     "max": 30000
+  },
+  "priorYear": {
+    "year": 2568,
+    "asOf": "2025-09-01",
+    "members": 92860
   },
   "memberDrive": {
     "asOf": "2026-09-01",
@@ -106,6 +114,81 @@ window.NSF_TABLEAU_LIVE = {
       "money": 123838,
       "memberAsOf": "1 ก.ย. 2569",
       "moneyAsOf": "1 ก.ย. 2569",
+      "partial": true
+    }
+  ],
+  "priorMonths": [
+    {
+      "key": "2025-01",
+      "label": "ม.ค.",
+      "members": 10521,
+      "money": 4090190.45,
+      "memberAsOf": "1 ก.ย. 2568",
+      "moneyAsOf": "1 ก.ย. 2568"
+    },
+    {
+      "key": "2025-02",
+      "label": "ก.พ.",
+      "members": 9635,
+      "money": 3897809,
+      "memberAsOf": "1 ก.ย. 2568",
+      "moneyAsOf": "1 ก.ย. 2568"
+    },
+    {
+      "key": "2025-03",
+      "label": "มี.ค.",
+      "members": 12173,
+      "money": 4138805,
+      "memberAsOf": "1 ก.ย. 2568",
+      "moneyAsOf": "1 ก.ย. 2568"
+    },
+    {
+      "key": "2025-04",
+      "label": "เม.ย.",
+      "members": 10200,
+      "money": 3454556,
+      "memberAsOf": "1 ก.ย. 2568",
+      "moneyAsOf": "1 ก.ย. 2568"
+    },
+    {
+      "key": "2025-05",
+      "label": "พ.ค.",
+      "members": 11596,
+      "money": 3254890,
+      "memberAsOf": "1 ก.ย. 2568",
+      "moneyAsOf": "1 ก.ย. 2568"
+    },
+    {
+      "key": "2025-06",
+      "label": "มิ.ย.",
+      "members": 12067,
+      "money": 2560317.84,
+      "memberAsOf": "1 ก.ย. 2568",
+      "moneyAsOf": "1 ก.ย. 2568"
+    },
+    {
+      "key": "2025-07",
+      "label": "ก.ค.",
+      "members": 10386,
+      "money": 2743511.26,
+      "memberAsOf": "1 ก.ย. 2568",
+      "moneyAsOf": "1 ก.ย. 2568"
+    },
+    {
+      "key": "2025-08",
+      "label": "ส.ค.",
+      "members": 15880,
+      "money": 3676122,
+      "memberAsOf": "1 ก.ย. 2568",
+      "moneyAsOf": "1 ก.ย. 2568"
+    },
+    {
+      "key": "2025-09",
+      "label": "ก.ย.",
+      "members": 402,
+      "money": 84910,
+      "memberAsOf": "1 ก.ย. 2568",
+      "moneyAsOf": "1 ก.ย. 2568",
       "partial": true
     }
   ],
