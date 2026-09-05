@@ -363,6 +363,45 @@ async function queryHistoryYear(token, year, currentAsOf) {
   return { year: year + 543, asOf, members, money, months };
 }
 
+
+function cumulativeMonthEnds(year) {
+  return Array.from({ length: 12 }, (_, index) =>
+    new Date(Date.UTC(year, index + 1, 0)).toISOString().slice(0, 10));
+}
+
+function validateCumulativeYear(row, year) {
+  const label = `Full-year cumulative query ${year + 543}`;
+  const members = numberField(row, "members", label);
+  if (!Number.isInteger(members) || members < 1 || members > 1_000_000) {
+    throw new Error(`${label} total is outside the approved range`);
+  }
+  let previous = 0;
+  const points = cumulativeMonthEnds(year).map((date, index) => {
+    const value = numberField(row, `cumulative${String(index + 1).padStart(2, "0")}`, label);
+    if (!Number.isInteger(value) || value < previous || value > members) {
+      throw new Error(`${label} has invalid or decreasing cumulative counts`);
+    }
+    previous = value;
+    return { date, members: value };
+  });
+  if (points[11].members !== members) {
+    throw new Error(`${label} December does not reconcile with the annual distinct-member total`);
+  }
+  return { year: year + 543, asOf: `${year}-12-31`, grain: "month-end", members, points };
+}
+
+async function queryCumulativeYear(token, year) {
+  const fields = [calculation("members", "COUNTD([INVESTOR_CODE])")];
+  cumulativeMonthEnds(year).forEach((date, index) => {
+    // COUNTD at every cutoff avoids double-counting a member who appears in two months.
+    fields.push(calculation(`cumulative${String(index + 1).padStart(2, "0")}`,
+      `COUNTD(IF DATE([TR_DATE]) <= #${date}# THEN [INVESTOR_CODE] END)`));
+  });
+  const rows = await queryDatasource(token, `Full-year cumulative query ${year + 543}`,
+    fields, ["1", "3"], { minDate: `${year}-01-01`, maxDate: `${year}-12-31` });
+  return validateCumulativeYear(expectSingleRow(rows, `Cumulative year ${year + 543}`), year);
+}
+
 const baseSource = await readFile(DATA_FILE, "utf8");
 const base = loadBaseData(baseSource);
 let token;
@@ -507,6 +546,11 @@ try {
     historicalYears.push(await queryHistoryYear(token, year, asOf));
   }
 
+  const cumulativeYears = [];
+  for (let year = YEAR_AD - 1; year >= YEAR_AD - 5; year -= 1) {
+    cumulativeYears.push(await queryCumulativeYear(token, year));
+  }
+
   let memberDrive;
   if (base.memberDrive) {
     const allocated = (base.memberDrive.weekly || []).reduce(
@@ -538,7 +582,7 @@ try {
       autoRefresh: "tableau-10m",
       comparisonAsOf: thaiDate(priorAsOf),
       comparisonBasis: "เดือนที่จบแล้วเทียบเต็มเดือน; เดือนล่าสุดเทียบถึงวันที่เดียวกันของทุกปี",
-      liveSections: ["totals", "months", "priorMonths", "historicalYears", "daily", "priorDaily", "channels", "channelTypes"]
+      liveSections: ["totals", "months", "priorMonths", "historicalYears", "cumulativeYears", "daily", "priorDaily", "channels", "channelTypes"]
     },
     totals: { members, money, avg, median, min, max },
     priorYear: { year: PRIOR_YEAR_BE, asOf: priorAsOf, members: priorMembers },
@@ -546,6 +590,7 @@ try {
     months,
     priorMonths,
     historicalYears,
+    cumulativeYears,
     daily,
     priorDaily,
     channels,
