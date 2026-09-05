@@ -90,7 +90,7 @@ a{color:var(--ink)}
     radial-gradient(1100px 380px at 12% -10%, rgba(78,147,219,.16), transparent 62%),
     radial-gradient(760px 300px at 88% 0%, rgba(227,182,85,.10), transparent 60%),
     linear-gradient(180deg,#16283A 0%,var(--paper) 100%);
-  padding:46px 0 52px;border-bottom:1px solid var(--line)
+  padding:46px 0 32px;border-bottom:1px solid var(--line)
 }
 .eyebrow{font-family:var(--display);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:0 0 12px;font-weight:600}
 .hero h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,4.4vw,44px);line-height:1.12;margin:0 0 8px;color:var(--ink);letter-spacing:-.01em}
@@ -106,21 +106,9 @@ a{color:var(--ink)}
 .headline .member-total,.headline .target-gap{padding-left:28px;border-left:1px solid var(--line)}
 .target-gap[data-state="behind"] .bignum{color:var(--behind)}
 .target-gap[data-state="ahead"] .bignum,.target-gap[data-state="met"] .bignum{color:var(--ahead)}
-.hero-money{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;padding:16px 0;margin-bottom:26px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.hero-money{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;padding:16px 0;margin-bottom:0;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 .hero-money .v{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--ink-soft)}
 .hero-money .note{font-size:12px}
-
-/* funnel rail */
-.rail{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 24px 18px}
-.rail-head{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px;color:var(--ink);margin-bottom:16px;font-family:var(--display);font-weight:600}
-.rail-head .chip{font-family:var(--mono);font-weight:500;font-size:11.5px;padding:3px 10px;border-radius:999px;background:var(--paper-2);color:var(--muted)}
-.rail-track{position:relative;height:38px;border-radius:10px;background:var(--paper-2);overflow:hidden}
-.rail-fill{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,var(--accent-2),var(--accent));transition:width 1.1s cubic-bezier(.2,.7,.3,1)}
-.rail-lab{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-family:var(--mono);font-size:12.5px;font-weight:600}
-.rail-lab.in{left:14px;color:#F2F8FF}
-.rail-lab.out{right:14px;color:var(--muted)}
-.rail-note{margin:14px 0 0;font-size:13px;color:var(--muted)}
-.rail-note b{color:var(--ink);font-weight:600}
 
 /* ---------- sections ---------- */
 section{padding:52px 0 4px;scroll-margin-top:142px}
@@ -365,18 +353,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       <span class="v" id="kMoney">—</span>
       <span class="note" id="kMoneyNote">บาท</span>
     </div>
-    <div class="rail">
-      <div class="rail-head">
-        <span>สมาชิกใหม่ปีนี้ที่ส่งเงินงวดถัดไปแล้ว</span>
-        <span class="chip" id="ftChip">—</span>
-      </div>
-      <div class="rail-track">
-        <div class="rail-fill" id="ftFill"></div>
-        <span class="rail-lab in" id="ftIn"></span>
-        <span class="rail-lab out" id="ftOut"></span>
-      </div>
-      <p class="rail-note" id="ftNote"></p>
-    </div>
   </div>
 </div>
 
@@ -587,7 +563,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   function el(tag,cls,html){ var e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
 
   // ---------- header numbers ----------
-  var detailMembers = D.meta.detailMembers || D.totals.members;
   var summaryAsOf = D.meta.summaryAsOf || D.meta.dataAsOf;
   var memberBreakdownAsOf = D.meta.memberBreakdownAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
   document.getElementById('periodLine').textContent =
@@ -643,19 +618,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     document.getElementById('kMoneyNote').textContent = 'บาท · ข้อมูลถึง ' + summaryAsOf;
   }
   renderHeaderMetrics();
-
-  // ---------- follow-through rail ----------
-  (function(){
-    var ft = D.followThrough, share = pct(ft.members, detailMembers);
-    document.getElementById('ftChip').textContent = nf(ft.rows)+' รายการ · '+nf(ft.money)+' บาท';
-    document.getElementById('ftIn').textContent  = nf(ft.members)+' คน · '+share.toFixed(1)+'%';
-    document.getElementById('ftOut').textContent = 'ยังไม่ส่งต่อ '+nf(detailMembers-ft.members)+' คน';
-    document.getElementById('ftNote').innerHTML =
-      'เงินงวดถัดไปใน snapshot รวม <b>'+nf(ft.money)+' บาท</b> จาก '+nf(ft.members)+' คน ('+share.toFixed(1)+'%) '+
-      'เฉลี่ย <b>'+nf(ft.avgPerMember)+' บาท/คน</b> '+
-      '· snapshot ถึง '+(D.meta.detailAsOf || D.meta.dataAsOf);
-    setTimeout(function(){ document.getElementById('ftFill').style.width = share+'%'; }, 260);
-  })();
 
   // ---------- bar list renderer ----------
   function renderBars(node, rows, opt){
