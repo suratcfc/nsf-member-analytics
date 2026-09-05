@@ -95,17 +95,20 @@ a{color:var(--ink)}
 .eyebrow{font-family:var(--display);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:0 0 12px;font-weight:600}
 .hero h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,4.4vw,44px);line-height:1.12;margin:0 0 8px;color:var(--ink);letter-spacing:-.01em}
 .hero .period{color:var(--muted);font-size:14.5px;margin:0 0 34px}
-.headline{display:flex;flex-wrap:wrap;align-items:flex-end;gap:26px 46px;margin-bottom:30px}
-.bignum{font-family:var(--mono);font-weight:600;font-size:clamp(46px,8vw,74px);line-height:1;letter-spacing:-.03em;color:var(--ink)}
-.bignum small{font-size:.3em;font-family:var(--body);font-weight:400;color:var(--muted);margin-left:12px;letter-spacing:0}
-.headline .label{font-size:12.5px;color:var(--muted);margin-bottom:6px}
-.stat{min-width:130px}
-.stat .v{font-family:var(--mono);font-size:23px;font-weight:600;color:var(--ink)}
-.stat .v.warn{color:var(--behind)}
-.stat .v.good{color:var(--ahead)}
-.stat .note{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.35}
-.stat.carry{min-width:auto;padding-left:26px;border-left:1px solid var(--line)}
-.stat.carry .v{color:var(--ink-soft)}
+.headline{display:grid;grid-template-columns:1.2fr 1fr 1fr;align-items:end;gap:28px;margin-bottom:26px}
+.headline > div{min-width:0}
+.headline .label{font-size:15px;color:var(--ink-soft);margin-bottom:10px}
+.headline .target .label{color:var(--gold);font-weight:500}
+.bignum{font-family:var(--mono);font-weight:600;font-size:clamp(38px,4.4vw,52px);line-height:1.1;letter-spacing:-.03em;color:var(--ink);white-space:nowrap}
+.bignum small{font-size:16px;font-family:var(--body);font-weight:400;color:var(--muted);margin-left:8px;letter-spacing:0}
+.target .bignum{font-size:clamp(58px,7vw,82px);color:var(--gold)}
+.headline .note{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.5}
+.headline .member-total,.headline .target-gap{padding-left:28px;border-left:1px solid var(--line)}
+.target-gap[data-state="behind"] .bignum{color:var(--behind)}
+.target-gap[data-state="ahead"] .bignum,.target-gap[data-state="met"] .bignum{color:var(--ahead)}
+.hero-money{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;padding:16px 0;margin-bottom:26px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.hero-money .v{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--ink-soft)}
+.hero-money .note{font-size:12px}
 
 /* funnel rail */
 .rail{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 24px 18px}
@@ -288,6 +291,20 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   .drive-summary{grid-template-columns:1fr}
   .daily-summary{grid-template-columns:1fr}
   .drive-chart{overflow-x:auto}
+  .headline{grid-template-columns:1fr 1fr;gap:24px}
+  .headline .target{grid-column:1 / -1}
+  .headline .member-total{padding-left:0;border-left:0}
+  .headline .target-gap{padding-left:20px}
+}
+@media (max-width:480px){
+  .hero{padding-top:32px}
+  .hero h1{font-size:28px;line-height:1.25}
+  .headline{grid-template-columns:1fr;gap:22px}
+  .headline .member-total,.headline .target-gap{padding:20px 0 0;border-left:0;border-top:1px solid var(--line)}
+  .headline .label{margin-bottom:7px}
+  .headline .note{margin-top:8px}
+  .hero-money{gap:4px 12px}
+  .hero-money .note{flex-basis:100%}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important;animation:none !important}
@@ -323,29 +340,30 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 <div class="hero" id="top">
   <div class="wrap">
     <p class="eyebrow">รายงานสรุปแจกแจง</p>
-    <h1>สมาชิกใหม่ ปีปฏิทิน 2569</h1>
+    <h1>แผนเป้าหมายสมาชิกใหม่ ปี 2569</h1>
     <p class="period" id="periodLine"></p>
 
     <div class="headline">
-      <div>
+      <div class="target">
+        <div class="label" id="kTargetLabel">แผนเป้าหมายปี 2569</div>
+        <div class="bignum"><span id="kTarget">—</span><small>คน</small></div>
+        <div class="note">เป้าหมายสมาชิกใหม่สะสมทั้งปี</div>
+      </div>
+      <div class="member-total">
         <div class="label">สมาชิกใหม่สะสม</div>
-        <div class="bignum"><span id="kMembers">0</span><small>คน</small></div>
+        <div class="bignum"><span id="kMembers">—</span><small>คน</small></div>
+        <div class="note" id="kMembersDate">ณ วันที่ —</div>
       </div>
-      <div class="stat">
-        <div class="label">เงินนำส่งงวดแรก</div>
-        <div class="v" id="kMoney">—</div>
-        <div class="note" id="kMoneyNote">บาท</div>
+      <div class="target-gap" id="targetGap">
+        <div class="label" id="kGapLabel">ส่วนต่างจากเป้าหมายทั้งปี</div>
+        <div class="bignum"><span id="kGap">—</span><small>คน</small></div>
+        <div class="note" id="kGapNote">เทียบกับเป้าหมายสมาชิกใหม่ทั้งปี</div>
       </div>
-      <div class="stat">
-        <div class="label">มัธยฐานต่อคน</div>
-        <div class="v warn" id="kMedian">—</div>
-        <div class="note" id="kMedianNote">เท่ากับขั้นต่ำที่สมัครได้</div>
-      </div>
-      <div class="stat carry">
-        <div class="label">ค่าเฉลี่ยต่อคน</div>
-        <div class="v" id="kAvg">—</div>
-        <div class="note" id="kAvgNote">ถูกดึงขึ้นโดยคนส่วนน้อย</div>
-      </div>
+    </div>
+    <div class="hero-money">
+      <span>เงินนำส่งงวดแรก</span>
+      <span class="v" id="kMoney">—</span>
+      <span class="note" id="kMoneyNote">บาท</span>
     </div>
     <div class="rail">
       <div class="rail-head">
@@ -584,25 +602,47 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     'ยอดรวม/รายเดือน/ช่องทาง ' + summaryAsOf + ' · อาชีพ/พื้นที่ ' + memberBreakdownAsOf +
     ' · มิติอื่น ' + (D.meta.detailAsOf || D.meta.dataAsOf);
 
-  // count-up on the big number
-  (function(){
-    var target = D.totals.members, node = document.getElementById('kMembers'), t0 = null, dur = 1100;
-    function step(ts){
-      if(!t0) t0 = ts;
-      var p = Math.min((ts-t0)/dur,1), e = 1-Math.pow(1-p,3);
-      node.textContent = nf(Math.round(target*e));
-      if(p<1) requestAnimationFrame(step);
+  // All hero metrics use the same merged snapshot and the existing annual target.
+  function renderHeaderMetrics(){
+    var year = D.meta.year;
+    var target = Number(D.memberDrive && D.memberDrive.totalTarget);
+    var members = Number(D.totals.members);
+    var hasTarget = Number.isFinite(target) && target > 0;
+    var hasMembers = Number.isFinite(members) && members >= 0;
+    document.getElementById('kTargetLabel').textContent = 'แผนเป้าหมายปี ' + year;
+    document.getElementById('kTarget').textContent = hasTarget ? nf(target) : '—';
+    document.getElementById('kMembers').textContent = hasMembers ? nf(members) : '—';
+
+    // Expand the source's Thai date; never use today's date for the data cutoff.
+    var months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+      'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    var shortMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.',
+      'ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    var dateLabel = summaryAsOf || '';
+    shortMonths.forEach(function(name,i){ dateLabel = dateLabel.replace(name, months[i]); });
+    document.getElementById('kMembersDate').textContent =
+      dateLabel ? 'ณ วันที่ ' + dateLabel : 'ยังไม่ระบุวันที่ข้อมูล';
+
+    var gapLabel = document.getElementById('kGapLabel');
+    var gapNode = document.getElementById('kGap');
+    var gapNote = document.getElementById('kGapNote');
+    var gapCard = document.getElementById('targetGap');
+    if(hasTarget && hasMembers){
+      var gap = target - members;
+      gapLabel.textContent = gap > 0 ? 'ยังขาดจากเป้าหมาย' : gap < 0 ? 'เกินเป้าหมายแล้ว' : 'ครบตามเป้าหมายแล้ว';
+      gapNode.textContent = nf(Math.abs(gap));
+      gapCard.setAttribute('data-state', gap > 0 ? 'behind' : gap < 0 ? 'ahead' : 'met');
+      gapNote.textContent = 'เทียบกับเป้าหมายทั้งปี ' + nf(target) + ' คน';
+    }else{
+      gapLabel.textContent = 'ส่วนต่างจากเป้าหมายทั้งปี';
+      gapNode.textContent = '—';
+      gapCard.setAttribute('data-state', 'unknown');
+      gapNote.textContent = 'รอข้อมูลเป้าหมายหรือยอดสมาชิก';
     }
-    if(window.matchMedia('(prefers-reduced-motion:reduce)').matches){ node.textContent = nf(target); }
-    else requestAnimationFrame(step);
-  })();
-  document.getElementById('kMoney').textContent  = nf(D.totals.money);
-  document.getElementById('kMedian').textContent = nf(D.totals.median);
-  document.getElementById('kAvg').textContent    = nf(D.totals.avg,2);
-  var detailNote = 'ข้อมูลถึง ' + summaryAsOf;
-  document.getElementById('kMoneyNote').textContent = 'บาท · ' + detailNote;
-  document.getElementById('kMedianNote').textContent = 'เท่ากับขั้นต่ำที่สมัครได้ · ' + detailNote;
-  document.getElementById('kAvgNote').textContent = 'ถูกดึงขึ้นโดยคนส่วนน้อย · ' + detailNote;
+    document.getElementById('kMoney').textContent = nf(D.totals.money);
+    document.getElementById('kMoneyNote').textContent = 'บาท · ข้อมูลถึง ' + summaryAsOf;
+  }
+  renderHeaderMetrics();
 
   // ---------- follow-through rail ----------
   (function(){
