@@ -249,7 +249,7 @@ function monthlyRows(rows, asOf, label = "Monthly query", minDate = PERIOD_START
         money: roundMoney(numberField(row, "money", label)),
         memberAsOf: thaiDate(asOf),
         moneyAsOf: thaiDate(asOf),
-        ...(key === asOf.slice(0, 7) ? { partial: true } : {})
+        ...(key === asOf.slice(0, 7) && Number(asOf.slice(8, 10)) < new Date(Date.UTC(Number(asOf.slice(0, 4)), monthIndex + 1, 0)).getUTCDate() ? { partial: true } : {})
       };
     })
     .sort((a, b) => a.key.localeCompare(b.key));
@@ -307,6 +307,62 @@ function channelTypeRows(rows) {
     .sort((a, b) => b.members - a.members || b.money - a.money);
 }
 
+
+function validateHistoryMonths(rows, asOf, year, totalMembers, totalMoney) {
+  const label = `Historical monthly query ${year + 543}`;
+  const byMonth = new Map();
+  for (const row of rows) {
+    if (byMonth.has(row.key) || !row.key.startsWith(`${year}-`) ||
+        row.key > asOf.slice(0, 7) || !Number.isInteger(row.members) ||
+        row.members < 0 || !Number.isFinite(row.money) || row.money < 0) {
+      throw new Error(`${label} returned invalid or duplicate aggregate months`);
+    }
+    byMonth.set(row.key, row);
+  }
+  if (!Number.isInteger(totalMembers) || totalMembers < 1 || totalMembers > 1_000_000 ||
+      !Number.isFinite(totalMoney) || totalMoney < 0) {
+    throw new Error(`${label} summary is outside the approved range`);
+  }
+  assertClose(sum(rows, "members"), totalMembers, Math.max(10, totalMembers * 0.02), `${label} members`);
+  assertClose(roundMoney(sum(rows, "money")), totalMoney, 1, `${label} money`);
+  // A missing group is zero only after a successful query reconciles with its summary.
+  return Array.from({ length: Number(asOf.slice(5, 7)) }, (_, index) => {
+    const key = `${year}-${String(index + 1).padStart(2, "0")}`;
+    return byMonth.get(key) || {
+      key, label: THAI_MONTHS[index], members: 0, money: 0,
+      memberAsOf: thaiDate(asOf), moneyAsOf: thaiDate(asOf),
+      ...(index + 1 === Number(asOf.slice(5, 7)) &&
+        Number(asOf.slice(8, 10)) < new Date(Date.UTC(year, index + 1, 0)).getUTCDate()
+        ? { partial: true } : {})
+    };
+  });
+}
+
+async function queryHistoryYear(token, year, currentAsOf) {
+  const asOf = `${year}${currentAsOf.slice(4)}`;
+  const range = { minDate: `${year}-01-01`, maxDate: asOf };
+  const label = `Historical year ${year + 543}`;
+  const [summaryRows, monthRows] = await Promise.all([
+    queryDatasource(token, `${label} summary`, [
+      calculation("members", "COUNTD([INVESTOR_CODE])"),
+      calculation("money", "SUM([PRINCIPLE])")
+    ], ["1", "3"], range),
+    queryDatasource(token, `${label} months`, [
+      { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
+      { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
+      { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
+    ], ["1", "3"], range)
+  ]);
+  const summary = expectSingleRow(summaryRows, label);
+  const members = numberField(summary, "members", label);
+  const money = roundMoney(numberField(summary, "money", label));
+  const months = validateHistoryMonths(
+    monthlyRows(monthRows, asOf, label, range.minDate, range.maxDate),
+    asOf, year, members, money
+  );
+  return { year: year + 543, asOf, members, money, months };
+}
+
 const baseSource = await readFile(DATA_FILE, "utf8");
 const base = loadBaseData(baseSource);
 let token;
@@ -357,7 +413,8 @@ try {
       { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
     ], ["1", "3"]),
     queryDatasource(token, "Prior-year summary query", [
-      calculation("members", "COUNTD([INVESTOR_CODE])")
+      calculation("members", "COUNTD([INVESTOR_CODE])"),
+      calculation("money", "SUM([PRINCIPLE])")
     ], ["1", "3"], { minDate: PRIOR_PERIOD_START, maxDate: priorAsOf }),
     queryDatasource(token, "Prior-year monthly aggregate query", [
       { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
@@ -439,6 +496,17 @@ try {
     throw new Error("Prior-year daily member counts do not exactly reconcile with the prior-year distinct-member total");
   }
 
+
+  const priorMoney = roundMoney(numberField(priorSummary, "money", "Prior-year summary query"));
+  const historicalYears = [{
+    year: PRIOR_YEAR_BE, asOf: priorAsOf, members: priorMembers, money: priorMoney,
+    months: validateHistoryMonths(priorMonths, priorAsOf, PRIOR_YEAR_AD, priorMembers, priorMoney)
+  }];
+  // Query one historical year at a time to keep the Tableau workload bounded.
+  for (let year = YEAR_AD - 2; year >= YEAR_AD - 5; year -= 1) {
+    historicalYears.push(await queryHistoryYear(token, year, asOf));
+  }
+
   let memberDrive;
   if (base.memberDrive) {
     const allocated = (base.memberDrive.weekly || []).reduce(
@@ -469,14 +537,15 @@ try {
       latestSource: "Tableau · VIEW_BI_DS",
       autoRefresh: "tableau-10m",
       comparisonAsOf: thaiDate(priorAsOf),
-      comparisonBasis: "เดือนที่จบแล้วเทียบเต็มเดือน; เดือนล่าสุดเทียบถึงวันที่เดียวกันของทั้งสองปี",
-      liveSections: ["totals", "months", "priorMonths", "daily", "priorDaily", "channels", "channelTypes"]
+      comparisonBasis: "เดือนที่จบแล้วเทียบเต็มเดือน; เดือนล่าสุดเทียบถึงวันที่เดียวกันของทุกปี",
+      liveSections: ["totals", "months", "priorMonths", "historicalYears", "daily", "priorDaily", "channels", "channelTypes"]
     },
     totals: { members, money, avg, median, min, max },
     priorYear: { year: PRIOR_YEAR_BE, asOf: priorAsOf, members: priorMembers },
     ...(memberDrive ? { memberDrive } : {}),
     months,
     priorMonths,
+    historicalYears,
     daily,
     priorDaily,
     channels,
