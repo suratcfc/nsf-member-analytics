@@ -16,6 +16,7 @@ window.NSF_TABLEAU_LIVE = {
       "months",
       "priorMonths",
       "historicalYears",
+      "cumulativeYears",
       "daily",
       "priorDaily",
       "channels",
@@ -597,6 +598,288 @@ window.NSF_TABLEAU_LIVE = {
           "memberAsOf": "1 ก.ย. 2564",
           "moneyAsOf": "1 ก.ย. 2564",
           "partial": true
+        }
+      ]
+    }
+  ],
+  "cumulativeYears": [
+    {
+      "year": 2568,
+      "asOf": "2025-12-31",
+      "grain": "month-end",
+      "members": 136494,
+      "points": [
+        {
+          "date": "2025-01-31",
+          "members": 10521
+        },
+        {
+          "date": "2025-02-28",
+          "members": 20156
+        },
+        {
+          "date": "2025-03-31",
+          "members": 32329
+        },
+        {
+          "date": "2025-04-30",
+          "members": 42529
+        },
+        {
+          "date": "2025-05-31",
+          "members": 54125
+        },
+        {
+          "date": "2025-06-30",
+          "members": 66192
+        },
+        {
+          "date": "2025-07-31",
+          "members": 76578
+        },
+        {
+          "date": "2025-08-31",
+          "members": 92458
+        },
+        {
+          "date": "2025-09-30",
+          "members": 105980
+        },
+        {
+          "date": "2025-10-31",
+          "members": 116417
+        },
+        {
+          "date": "2025-11-30",
+          "members": 126772
+        },
+        {
+          "date": "2025-12-31",
+          "members": 136494
+        }
+      ]
+    },
+    {
+      "year": 2567,
+      "asOf": "2024-12-31",
+      "grain": "month-end",
+      "members": 135816,
+      "points": [
+        {
+          "date": "2024-01-31",
+          "members": 6982
+        },
+        {
+          "date": "2024-02-29",
+          "members": 13675
+        },
+        {
+          "date": "2024-03-31",
+          "members": 18801
+        },
+        {
+          "date": "2024-04-30",
+          "members": 24523
+        },
+        {
+          "date": "2024-05-31",
+          "members": 37818
+        },
+        {
+          "date": "2024-06-30",
+          "members": 49868
+        },
+        {
+          "date": "2024-07-31",
+          "members": 61389
+        },
+        {
+          "date": "2024-08-31",
+          "members": 75825
+        },
+        {
+          "date": "2024-09-30",
+          "members": 100805
+        },
+        {
+          "date": "2024-10-31",
+          "members": 115893
+        },
+        {
+          "date": "2024-11-30",
+          "members": 125837
+        },
+        {
+          "date": "2024-12-31",
+          "members": 135816
+        }
+      ]
+    },
+    {
+      "year": 2566,
+      "asOf": "2023-12-31",
+      "grain": "month-end",
+      "members": 59523,
+      "points": [
+        {
+          "date": "2023-01-31",
+          "members": 2028
+        },
+        {
+          "date": "2023-02-28",
+          "members": 3953
+        },
+        {
+          "date": "2023-03-31",
+          "members": 6635
+        },
+        {
+          "date": "2023-04-30",
+          "members": 9114
+        },
+        {
+          "date": "2023-05-31",
+          "members": 12512
+        },
+        {
+          "date": "2023-06-30",
+          "members": 15538
+        },
+        {
+          "date": "2023-07-31",
+          "members": 19915
+        },
+        {
+          "date": "2023-08-31",
+          "members": 24503
+        },
+        {
+          "date": "2023-09-30",
+          "members": 35994
+        },
+        {
+          "date": "2023-10-31",
+          "members": 45011
+        },
+        {
+          "date": "2023-11-30",
+          "members": 51024
+        },
+        {
+          "date": "2023-12-31",
+          "members": 59523
+        }
+      ]
+    },
+    {
+      "year": 2565,
+      "asOf": "2022-12-31",
+      "grain": "month-end",
+      "members": 57511,
+      "points": [
+        {
+          "date": "2022-01-31",
+          "members": 3975
+        },
+        {
+          "date": "2022-02-28",
+          "members": 8522
+        },
+        {
+          "date": "2022-03-31",
+          "members": 16858
+        },
+        {
+          "date": "2022-04-30",
+          "members": 20493
+        },
+        {
+          "date": "2022-05-31",
+          "members": 24371
+        },
+        {
+          "date": "2022-06-30",
+          "members": 27970
+        },
+        {
+          "date": "2022-07-31",
+          "members": 31753
+        },
+        {
+          "date": "2022-08-31",
+          "members": 37611
+        },
+        {
+          "date": "2022-09-30",
+          "members": 50422
+        },
+        {
+          "date": "2022-10-31",
+          "members": 52830
+        },
+        {
+          "date": "2022-11-30",
+          "members": 55518
+        },
+        {
+          "date": "2022-12-31",
+          "members": 57511
+        }
+      ]
+    },
+    {
+      "year": 2564,
+      "asOf": "2021-12-31",
+      "grain": "month-end",
+      "members": 62373,
+      "points": [
+        {
+          "date": "2021-01-31",
+          "members": 3892
+        },
+        {
+          "date": "2021-02-28",
+          "members": 7736
+        },
+        {
+          "date": "2021-03-31",
+          "members": 13997
+        },
+        {
+          "date": "2021-04-30",
+          "members": 18010
+        },
+        {
+          "date": "2021-05-31",
+          "members": 20024
+        },
+        {
+          "date": "2021-06-30",
+          "members": 27843
+        },
+        {
+          "date": "2021-07-31",
+          "members": 40705
+        },
+        {
+          "date": "2021-08-31",
+          "members": 47804
+        },
+        {
+          "date": "2021-09-30",
+          "members": 54456
+        },
+        {
+          "date": "2021-10-31",
+          "members": 57425
+        },
+        {
+          "date": "2021-11-30",
+          "members": 59601
+        },
+        {
+          "date": "2021-12-31",
+          "members": 62373
         }
       ]
     }
