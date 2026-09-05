@@ -192,12 +192,6 @@ tbody tr:last-child td{border-bottom:0}
 .cxs span.part{color:var(--gold)}
 
 /* ---------- member-drive trend ---------- */
-.drive-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}
-.drive-kpi{padding:18px 20px}
-.drive-kpi .cap{font-size:12px;color:var(--muted)}
-.drive-kpi .num{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--ink);line-height:1.2;margin-top:3px}
-.drive-kpi .num.behind{color:var(--behind)}
-.drive-kpi .note{font-size:11.5px;color:var(--muted);margin-top:5px}
 .drive-chart{padding:22px 24px 16px;overflow:hidden}
 .drive-legend{display:flex;flex-wrap:wrap;gap:9px 22px;margin-bottom:10px;font-size:12.5px;color:var(--muted)}
 .drive-legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:7px;vertical-align:-1px}
@@ -276,9 +270,8 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   .month-legend:has(+ .cbars.compare),.cbars.compare,.cbars.compare + .cxs{min-width:720px}
   .cbars.compare{height:220px}
   .cxs{font-size:10.5px}
-  .drive-summary{grid-template-columns:1fr}
-  .daily-summary{grid-template-columns:1fr}
-  .drive-chart{overflow-x:auto}
+    .daily-summary{grid-template-columns:1fr}
+  .drive-chart{overflow:hidden}
   .headline{grid-template-columns:1fr 1fr;gap:24px}
   .headline .target{grid-column:1 / -1}
   .headline .member-total{padding-left:0;border-left:0}
@@ -352,6 +345,23 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
  .month-year{padding:7px 9px}
 }
 
+
+/* Cumulative chart shares year colors with the monthly section; controls are independent. */
+.drive-chart .month-toolbar{margin-bottom:12px}
+.drive-scroll{overflow-x:auto;scrollbar-width:thin}
+.drive-scroll:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.drive-chart .drive-svg{min-width:900px}
+.drive-chart .drive-legend{align-items:center;gap:8px 18px;margin-bottom:12px}
+.drive-legend .line-swatch{display:inline-block;width:25px;height:0;border-top:3px solid var(--series-color);vertical-align:4px;margin-right:7px}
+.drive-legend .target-swatch{border-top:3px dashed var(--gold)}
+.drive-svg .series-line{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.drive-svg .cumulative-point:focus{outline:none}
+.drive-svg .cumulative-point:focus .point-mark,.drive-svg .cumulative-point:hover .point-mark{stroke:var(--ink);stroke-width:3}
+.drive-svg .end-label{font-family:var(--mono);font-size:11.5px;font-weight:500}
+.drive-svg .latest-label{font-family:var(--body);font-size:11px;fill:var(--ink-soft)}
+.drive-svg .target-label{font-family:var(--mono);font-size:11.5px;fill:var(--gold)}
+@media(max-width:820px){.drive-chart{padding:20px 16px 16px}.drive-chart .month-years{width:100%}}
+
 </style>
 </head>
 <body>
@@ -366,7 +376,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     </a>
     <nav class="topnav" id="nav">
       <a href="#เดือน">รายเดือน</a>
-      <a href="#รายสัปดาห์">รายสัปดาห์</a>
+      <a href="#รายสัปดาห์">ยอดสะสม</a>
       <a href="#ช่องทาง">ช่องทาง</a>
       <a href="#แคมเปญ">แคมเปญ</a>
       <a href="#อายุ">ช่วงอายุ</a>
@@ -449,16 +459,16 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 
 <section id="รายสัปดาห์">
   <div class="wrap">
-    <div class="sec-head"><h2>สมาชิกใหม่สะสมรายสัปดาห์</h2><span class="hint">ปี 2569 เทียบปี 2568 และเส้นเป้าหมายแผน ก.ค.–ธ.ค. 2569</span></div>
-    <div class="sec-rule"></div>
-    <div class="drive-summary">
-      <div class="card drive-kpi"><div class="cap">เป้าหมายทั้งแผน</div><div class="num" id="driveTarget">—</div><div class="note">ภายใน 31 ธ.ค. 2569</div></div>
-      <div class="card drive-kpi"><div class="cap">ควรทำได้ถึงวันที่ล่าสุด</div><div class="num" id="drivePace">—</div><div class="note">คำนวณแบบเฉลี่ยตลอดช่วงแผน</div></div>
-      <div class="card drive-kpi"><div class="cap">ห่างจากเส้นเป้าหมาย</div><div class="num" id="driveGap">—</div><div class="note" id="driveGapNote"></div></div>
-    </div>
     <div class="card drive-chart">
-      <div class="drive-legend"><span><i style="background:var(--accent)"></i>ผลจริงสะสมปี 2569</span><span><i style="background:#91A6B8"></i>ผลจริงสะสมปี 2568</span><span><i style="background:var(--gold)"></i>เส้นเป้าหมาย</span></div>
-      <div style="overflow-x:auto"><svg class="drive-svg" id="driveTrend" viewBox="0 0 1000 390" role="img" aria-label="กราฟสมาชิกใหม่สะสมปี 2569 เทียบปี 2568 และเส้นเป้าหมาย"></svg></div>
+      <div class="month-toolbar">
+        <fieldset class="month-years" id="driveYears"><legend>เลือกเส้นผลจริงสะสมที่ต้องการแสดง</legend></fieldset>
+        <div class="month-actions"><button type="button" id="driveAll">แสดงทุกปี</button><button type="button" id="driveReset">กลับเป็น 3 ปีล่าสุด</button></div>
+      </div>
+      <p class="month-status" id="driveStatus" role="status" aria-live="polite"></p>
+      <div class="drive-legend" id="driveLegend"></div>
+      <div class="drive-scroll" tabindex="0" role="region" aria-label="กราฟยอดสมาชิกใหม่สะสม มกราคมถึงธันวาคม">
+        <svg class="drive-svg" id="driveTrend" viewBox="0 0 1080 470" role="group" aria-label="ยอดสมาชิกใหม่สะสมเทียบย้อนหลังห้าปีและเส้นเป้าหมาย"></svg>
+      </div>
       <p class="drive-note" id="driveNote"></p>
     </div>
 
@@ -596,7 +606,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     D.followThrough = Object.assign({}, D.followThrough, LIVE.followThrough || {});
     D.memberDrive = Object.assign({}, D.memberDrive, LIVE.memberDrive || {});
     D.priorYear = Object.assign({}, D.priorYear, LIVE.priorYear || {});
-    ['months','priorMonths','historicalYears','daily','priorDaily','channels','channelTypes'].forEach(function(key){
+    ['months','priorMonths','historicalYears','cumulativeYears','daily','priorDaily','channels','channelTypes'].forEach(function(key){
       if(Array.isArray(LIVE[key])) D[key] = LIVE[key];
     });
   }
@@ -859,106 +869,141 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   });
 
   // ---------- member-drive target trend ----------
-  function renderMemberDrive(){
-    var md = D.memberDrive;
-    if(!md) return;
-    var DAY = 86400000;
-    function dateOnly(s){ var a=s.split('-').map(Number); return new Date(Date.UTC(a[0],a[1]-1,a[2])); }
-    function thaiDate(s){
-      var x=dateOnly(s), mons=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-      return x.getUTCDate()+' '+mons[x.getUTCMonth()]+' '+(x.getUTCFullYear()+543);
-    }
-    function weekTotal(w){ return md.campaigns.reduce(function(s,c){ return s+(w.values[c.key]||0); },0); }
-    var start=dateOnly(md.startDate), end=dateOnly(md.endDate), asof=dateOnly(md.asOf);
-    var totalDays=Math.round((end-start)/DAY)+1;
-    var elapsed=Math.max(0,Math.min(totalDays,Math.round((asof-start)/DAY)+1));
-    var pace=md.carryOver+(md.totalTarget-md.carryOver)*elapsed/totalDays;
-    var actual=D.totals.members;
-    var gap=actual-pace;
-
-    document.getElementById('driveTarget').textContent=nf(md.totalTarget)+' คน';
-    document.getElementById('drivePace').textContent=nf(pace)+' คน';
-    var gapNode=document.getElementById('driveGap');
-    gapNode.textContent=(gap>=0?'+':'−')+nf(Math.abs(gap))+' คน';
-    gapNode.className='num '+(gap>=0?'good':'behind');
-    document.getElementById('driveGapNote').textContent=gap>=0?'เร็วกว่าเส้นเป้าหมาย':'ต่ำกว่าเส้นเป้าหมาย ณ '+thaiDate(md.asOf);
-
-    var W=1000,H=390,L=76,R=24,T=20,B=42;
-    function x(dt){ return L+(W-L-R)*Math.max(0,Math.min(1,(dt-start)/(end-start))); }
-    function y(v){ return H-B-(H-T-B)*v/md.totalTarget; }
-    var svg='', i;
-    for(i=0;i<=4;i++){
-      var tick=md.totalTarget*i/4, yy=y(tick);
-      svg+='<line class="grid" x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'"></line>'+
-           '<text class="axis" x="'+(L-12)+'" y="'+(yy+4)+'" text-anchor="end">'+nf(tick)+'</text>';
-    }
-    var monthNames=['ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-    for(i=0;i<6;i++){
-      var dt=new Date(Date.UTC(2026,6+i,1)), xx=x(dt);
-      if(i) svg+='<line class="vgrid" x1="'+xx+'" y1="'+T+'" x2="'+xx+'" y2="'+(H-B)+'"></line>';
-      svg+='<text class="axis" x="'+(xx+6)+'" y="'+(H-14)+'">'+monthNames[i]+'</text>';
-    }
-    svg+='<line x1="'+x(start)+'" y1="'+y(md.carryOver)+'" x2="'+x(end)+'" y2="'+y(md.totalTarget)+'" stroke="'+cssvar('--gold')+'" stroke-width="3" stroke-dasharray="9 7"></line>';
-    svg+='<circle cx="'+x(start)+'" cy="'+y(md.carryOver)+'" r="4" fill="'+cssvar('--gold')+'"></circle>'+
-         '<text class="note" x="'+(x(start)+10)+'" y="'+(y(md.carryOver)-10)+'">ยอดยกมา '+nf(md.carryOver)+'</text>';
-
-    function weeklyCumulative(rows, sourceYear){
-      if(!Array.isArray(rows) || !rows.length) return null;
-      var startKey=sourceYear+'-'+String(start.getUTCMonth()+1).padStart(2,'0')+'-'+String(start.getUTCDate()).padStart(2,'0');
-      var running=rows.reduce(function(total,row){ return total+(row.date<startKey?Number(row.members||0):0); },0);
-      var points=[[x(start),y(running)]];
-      rows.forEach(function(row){
-        if(row.date<startKey) return;
-        var a=row.date.split('-').map(Number);
-        var mapped=new Date(Date.UTC(start.getUTCFullYear(),a[1]-1,a[2]));
-        if(mapped<start || mapped>asof) return;
-        running+=Number(row.members||0);
-        if(mapped.getUTCDay()===0 || mapped.getTime()===asof.getTime()) points.push([x(mapped),y(running)]);
-      });
-      return {points:points,total:running};
-    }
-
-    var currentSeries=weeklyCumulative(D.daily,start.getUTCFullYear());
-    var run=md.carryOver, pts;
-    if(currentSeries){
-      pts=currentSeries.points;
-    }else{
-      pts=[[x(start),y(run)]];
-      md.weekly.forEach(function(w){ run+=weekTotal(w); pts.push([x(dateOnly(w.end)),y(run)]); });
-      if(md.pending && md.pending.members){ run+=md.pending.members; pts.push([x(asof),y(run)]); }
-    }
-    svg+='<polyline fill="none" stroke="'+cssvar('--accent')+'" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" points="'+pts.map(function(p){return p.join(',');}).join(' ')+'"></polyline>';
-    pts.slice(1).forEach(function(p){ svg+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5" fill="'+cssvar('--surface')+'" stroke="'+cssvar('--accent')+'" stroke-width="3"></circle>'; });
-
-    var priorTotal=null, priorPts=[];
-    var priorSeries=weeklyCumulative(D.priorDaily,start.getUTCFullYear()-1);
-    if(priorSeries){
-      priorPts=priorSeries.points;
-      priorTotal=priorSeries.total;
-      if(priorPts.length>1){
-        svg+='<polyline fill="none" stroke="#91A6B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="'+priorPts.map(function(p){return p.join(',');}).join(' ')+'"><title>ผลจริงสะสมปี 2568 ถึงวันเดียวกัน '+nf(priorTotal)+' คน</title></polyline>';
-        var priorLast=priorPts[priorPts.length-1];
-        svg+='<circle cx="'+priorLast[0]+'" cy="'+priorLast[1]+'" r="5" fill="'+cssvar('--surface')+'" stroke="#91A6B8" stroke-width="3"></circle>'+
-             '<text class="note" x="'+(priorLast[0]+7)+'" y="'+(priorLast[1]-10)+'">'+nf(priorTotal)+' คน · ปี 2568</text>';
-      }
-    }
-    var todayX=x(asof);
-    svg+='<line x1="'+todayX+'" y1="'+T+'" x2="'+todayX+'" y2="'+(H-B)+'" stroke="'+cssvar('--muted')+'" stroke-width="1"></line>'+
-         '<text class="note" x="'+(todayX+7)+'" y="'+(T+13)+'">ข้อมูลล่าสุด</text>'+
-         '<text class="note" x="'+(todayX+7)+'" y="'+(y(actual)-10)+'">'+nf(actual)+' คน · ปี 2569</text>';
-    var driveTrend=document.getElementById('driveTrend');
-    driveTrend.innerHTML=svg;
-    driveTrend.setAttribute('aria-label','สมาชิกใหม่สะสมปี 2569 '+nf(actual)+' คน'+(priorTotal!==null?' เทียบปี 2568 '+nf(priorTotal)+' คน':'')+' และเส้นเป้าหมาย '+nf(md.totalTarget)+' คน');
-
-    var allocated=md.weekly.reduce(function(s,w){return s+weekTotal(w);},0);
-    document.getElementById('driveNote').innerHTML=
-      'ยอดสะสม <b>'+nf(actual)+' คน</b> ณ '+thaiDate(md.asOf)+' = ยอดยกมา '+nf(md.carryOver)+
-      ' + จัดสรรตามแคมเปญถึง '+thaiDate(md.detailAsOf)+' จำนวน '+nf(allocated)+
-      (md.pending && md.pending.members?' + รอจัดสรรเข้าแคมเปญ '+nf(md.pending.members):'')+' คน'+
-      (priorTotal!==null?' · ณ วันเดียวกันปี 2568 มียอดสะสม <b>'+nf(priorTotal)+' คน</b> ('+
-        ((actual-priorTotal)/priorTotal*100>=0?'+':'')+((actual-priorTotal)/priorTotal*100).toFixed(1)+'%)':'');
-
+  var selectedDriveYears=[2569,2568,2567];
+  var driveDash={2569:'',2568:'7 3',2567:'',2566:'2 4',2565:'9 3 2 3',2564:'4 3'};
+  function driveDate(date){
+    var a=date.split('-').map(Number),months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    return a[2]+' '+months[a[1]-1]+' '+(a[0]+543);
   }
+  function driveMonthEnd(year,month){return new Date(Date.UTC(year,month,0)).toISOString().slice(0,10);}
+  function drivePosition(date){
+    var a=date.split('-').map(Number);
+    return a[1]-1+a[2]/new Date(Date.UTC(a[0],a[1],0)).getUTCDate();
+  }
+  function reviewedCumulativeMonths(year,rows,asOf,total){
+    if(!Array.isArray(rows)||!rows.length||!/^\d{4}-\d{2}-\d{2}$/.test(asOf||''))return null;
+    var sorted=rows.slice().sort(function(a,b){return a.key.localeCompare(b.key);}),running=0,valid=true,seen={};
+    var points=sorted.map(function(m){
+      if(!Number.isInteger(m.members)||m.members<0||seen[m.key]||m.key.slice(0,4)!==String(year-543))valid=false;
+      seen[m.key]=true;running+=Number(m.members);
+      var date=m.key===asOf.slice(0,7)?asOf:driveMonthEnd(year-543,Number(m.key.slice(5,7)));
+      if(date>asOf)valid=false;
+      return {date:date,members:running};
+    });
+    if(!valid||running!==total)return null;
+    return {year:year,asOf:asOf,members:total,points:points,fullYear:asOf===String(year-543)+'-12-31'};
+  }
+  function cumulativeSeries(){
+    var result=[],current=reviewedCumulativeMonths(2569,D.months,D.meta.periodEnd,D.totals.members);
+    if(current)result.push(current);
+    monthYearOrder.slice(1).forEach(function(year){
+      var full=(D.cumulativeYears||[]).find(function(s){return s.year===year;});
+      if(full && full.asOf===String(year-543)+'-12-31' && Array.isArray(full.points) && full.points.length===12){
+        var valid=full.points.every(function(p,index){
+          return p.date===driveMonthEnd(year-543,index+1)&&Number.isInteger(p.members)&&p.members>=0&&
+            (!index||p.members>=full.points[index-1].members);
+        });
+        if(valid && full.points[11].members===full.members){result.push(Object.assign({},full,{fullYear:true}));return;}
+      }
+      // Existing reviewed snapshots remain visible only to their actual cutoff, never extended into missing months.
+      var partial=(D.historicalYears||[]).find(function(s){return s.year===year;});
+      if(partial){
+        var s=reviewedCumulativeMonths(year,partial.months,partial.asOf,partial.members);
+        if(s)result.push(s);
+      }
+    });
+    return result;
+  }
+  function renderDriveControls(){
+    var field=document.getElementById('driveYears'),series=cumulativeSeries();
+    field.innerHTML='<legend>เลือกเส้นผลจริงสะสมที่ต้องการแสดง</legend>';
+    monthYearOrder.forEach(function(year){
+      var ready=series.some(function(s){return s.year===year;});
+      var label=el('label','month-year'+(!ready?' unavailable':''));
+      label.style.setProperty('--series-color',monthYearColors[year]);
+      var input=el('input');input.type='checkbox';input.value=year;input.disabled=!ready;
+      input.checked=ready&&selectedDriveYears.indexOf(year)>=0;input.setAttribute('aria-label','เส้นผลจริงสะสมปี '+year);
+      input.addEventListener('change',function(){
+        if(this.checked&&selectedDriveYears.indexOf(year)<0)selectedDriveYears.push(year);
+        else if(!this.checked)selectedDriveYears=selectedDriveYears.filter(function(y){return y!==year;});
+        renderMemberDrive();
+      });
+      label.appendChild(input);label.appendChild(el('i'));label.appendChild(el('span','',String(year)));
+      if(year===2569||!ready)label.appendChild(el('small','',year===2569?'ปีปัจจุบัน':'รอข้อมูล'));
+      field.appendChild(label);
+    });
+  }
+  function driveMarker(year,x,y,color,description){
+    var i=monthYearOrder.indexOf(year),r=4,shape;
+    if(i===1)shape='<rect x="'+(x-r)+'" y="'+(y-r)+'" width="8" height="8"/>';
+    else if(i===2)shape='<path d="M '+x+' '+(y-5)+' L '+(x+5)+' '+y+' '+x+' '+(y+5)+' '+(x-5)+' '+y+' Z"/>';
+    else if(i===3)shape='<path d="M '+x+' '+(y-5)+' L '+(x+5)+' '+(y+4)+' '+(x-5)+' '+(y+4)+' Z"/>';
+    else if(i===4)shape='<path d="M '+(x-5)+' '+(y-4)+' L '+(x+5)+' '+(y-4)+' '+x+' '+(y+5)+' Z"/>';
+    else if(i===5)shape='<path d="M '+(x-4)+' '+(y-4)+' L '+(x+4)+' '+(y+4)+' M '+(x+4)+' '+(y-4)+' L '+(x-4)+' '+(y+4)+'" fill="none"/>';
+    else shape='<circle cx="'+x+'" cy="'+y+'" r="'+r+'"/>';
+    return '<g class="cumulative-point" tabindex="0" role="img" aria-label="'+description+'"><title>'+description+'</title><g class="point-mark" fill="'+cssvar('--surface')+'" stroke="'+color+'" stroke-width="2">'+shape+'</g></g>';
+  }
+  function renderMemberDrive(){
+    var md=D.memberDrive;if(!md)return;
+    var all=cumulativeSeries(),series=all.filter(function(s){return selectedDriveYears.indexOf(s.year)>=0;});
+    var svgNode=document.getElementById('driveTrend'),legend=document.getElementById('driveLegend');legend.innerHTML='';
+    series.forEach(function(s){
+      var sw=el('span');sw.innerHTML='<b class="line-swatch" style="--series-color:'+monthYearColors[s.year]+';'+(driveDash[s.year]?'border-top-style:dashed':'')+'"></b>ผลจริงสะสมปี '+s.year;legend.appendChild(sw);
+    });
+    legend.appendChild(el('span','','<b class="line-swatch target-swatch"></b>เส้นเป้าหมาย '+nf(md.totalTarget)+' คน'));
+    var incomplete=all.filter(function(s){return s.year!==2569&&!s.fullYear;}).map(function(s){return s.year;});
+    var missing=monthYearOrder.filter(function(year){return !all.some(function(s){return s.year===year;});});
+    document.getElementById('driveStatus').textContent=(series.length?'กำลังแสดงเส้นผลจริง '+series.length+' ปี':'ยังไม่เลือกเส้นผลจริง')+
+      ' · ติ๊กเพื่อแสดงหรือซ่อนแต่ละปีได้ · เส้นเป้าหมายแสดงตลอด'+
+      (incomplete.length?' · ปี '+incomplete.join(', ')+' ยังมีข้อมูลถึง '+driveDate(all.find(function(s){return s.year===incomplete[0];}).asOf).split(' ').slice(0,2).join(' ')+' ของแต่ละปีเท่านั้น กำลังรอข้อมูลครบปี':'')+
+      (missing.length?' · รอข้อมูลปี '+missing.join(', '):'');
+    var W=1080,H=470,L=72,R=140,T=34,B=48,plotW=W-L-R,plotH=H-T-B;
+    var peak=Math.max(md.totalTarget,Number(D.totals.members)||0);
+    all.forEach(function(s){peak=Math.max(peak,s.members);});
+    var step=Math.max(5000,Math.ceil(peak/4/5000)*5000),top=step*4;
+    function x(date){return L+plotW*drivePosition(date)/12;}
+    function y(n){return H-B-plotH*n/top;}
+    var svg='<title>ยอดสมาชิกใหม่สะสม มกราคมถึงธันวาคม เทียบปี 2564–2569 และเส้นเป้าหมาย</title>';
+    for(var i=0;i<=4;i++){var yy=y(i*step);svg+='<line class="grid" x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'"/><text class="axis" x="'+(L-12)+'" y="'+(yy+4)+'" text-anchor="end">'+nf(i*step)+'</text>';}
+    svg+='<text class="axis" x="'+(L-12)+'" y="17" text-anchor="end">คน</text>';
+    var mons=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    for(var m=0;m<=12;m++){
+      var xx=L+plotW*m/12;svg+='<line class="vgrid" x1="'+xx+'" y1="'+T+'" x2="'+xx+'" y2="'+(H-B)+'"/>';
+      if(m<12)svg+='<text class="axis" x="'+(xx+plotW/24)+'" y="'+(H-20)+'" text-anchor="middle">'+mons[m]+'</text>';
+    }
+    var endLabels=[];
+    // Keep the approved July–December plan and its carry-over unchanged; do not invent a Jan–Jun target.
+    svg+='<line data-series="target" x1="'+x(md.startDate)+'" y1="'+y(md.carryOver)+'" x2="'+x(md.endDate)+'" y2="'+y(md.totalTarget)+'" stroke="'+cssvar('--gold')+'" stroke-width="3" stroke-dasharray="10 7"><title>แผนเดิม '+driveDate(md.startDate)+' ถึง '+driveDate(md.endDate)+' · จาก '+nf(md.carryOver)+' สู่ '+nf(md.totalTarget)+' คน</title></line>';
+    svg+='<circle cx="'+x(md.startDate)+'" cy="'+y(md.carryOver)+'" r="4" fill="'+cssvar('--gold')+'"><title>เริ่มแผน '+driveDate(md.startDate)+' · ยอดยกมา '+nf(md.carryOver)+' คน</title></circle>';
+    endLabels.push({x:x(md.endDate),y:y(md.totalTarget),text:'เป้าหมาย '+nf(md.totalTarget),color:cssvar('--gold')});
+    series.slice().reverse().forEach(function(s){
+      var color=monthYearColors[s.year],points=[[L,y(0)]].concat(s.points.map(function(p){return[x(p.date),y(p.members)];}));
+      svg+='<polyline class="series-line" data-year="'+s.year+'" stroke="'+color+'" stroke-width="'+(s.year===2569?3:2.5)+'"'+(driveDash[s.year]?' stroke-dasharray="'+driveDash[s.year]+'"':'')+' points="'+points.map(function(p){return p.join(',');}).join(' ')+'"><title>ผลจริงสะสมปี '+s.year+' ถึง '+driveDate(s.asOf)+' รวม '+nf(s.members)+' คน</title></polyline>';
+      s.points.forEach(function(p){svg+=driveMarker(s.year,x(p.date),y(p.members),color,'ปี '+s.year+' · '+driveDate(p.date)+' · สะสม '+nf(p.members)+' คน');});
+      var last=s.points[s.points.length-1];endLabels.push({x:x(last.date),y:y(last.members),text:s.year+' · '+nf(last.members),color:color});
+    });
+    var latest=D.meta.periodEnd,latestX=x(latest);
+    svg+='<line x1="'+latestX+'" y1="'+T+'" x2="'+latestX+'" y2="'+(H-B)+'" stroke="'+cssvar('--muted')+'" stroke-width="1" stroke-dasharray="2 4"/><text class="latest-label" x="'+(latestX-5)+'" y="20" text-anchor="end">ปี 2569 ถึง '+driveDate(latest)+'</text>';
+    var groups={};endLabels.forEach(function(label){var key=Math.round(label.x/25);(groups[key]||(groups[key]=[])).push(label);});
+    Object.keys(groups).forEach(function(key){
+      var labels=groups[key].sort(function(a,b){return a.y-b.y;});
+      labels.forEach(function(label,index){label.ly=Math.max(T+10,label.y,index?labels[index-1].ly+20:T+10);});
+      for(var j=labels.length-1;j>=0;j--)labels[j].ly=Math.min(labels[j].ly,j<labels.length-1?labels[j+1].ly-20:H-B-4);
+      labels.forEach(function(label){
+        var tx=label.x+12;
+        if(Math.abs(label.ly-label.y)>4)svg+='<path d="M '+label.x+' '+label.y+' L '+(tx-4)+' '+label.ly+'" stroke="'+label.color+'" stroke-width="1" fill="none" opacity=".7"/>';
+        svg+='<rect x="'+(tx-3)+'" y="'+(label.ly-11)+'" width="123" height="18" rx="3" fill="'+cssvar('--surface')+'" opacity=".93"/><text class="end-label" x="'+tx+'" y="'+(label.ly+2)+'" fill="'+label.color+'">'+label.text+'</text>';
+      });
+    });
+    svgNode.innerHTML=svg;
+    svgNode.setAttribute('aria-label','ยอดสมาชิกใหม่สะสม มกราคมถึงธันวาคม · แสดงปี '+series.map(function(s){return s.year;}).join(', ')+' · เส้นเป้าหมาย '+nf(md.totalTarget)+' คน');
+    document.getElementById('driveNote').textContent='แหล่งข้อมูล: Tableau · VIEW_BI_DS · จุดบนเส้นคือยอดสะสม ณ สิ้นเดือน; ปี 2569 เดือนล่าสุดถึง '+driveDate(latest)+
+      ' และไม่แสดงค่าคาดการณ์หลังวันดังกล่าว · ปีเก่าแสดงตามช่วงข้อมูลที่มีจริง'+
+      ' · เส้นประสีทองคงแผนเดิม '+driveDate(md.startDate)+'–'+driveDate(md.endDate)+' จากยอดยกมา '+nf(md.carryOver)+' สู่เป้าหมาย '+nf(md.totalTarget)+' คน';
+  }
+  renderDriveControls();
+  document.getElementById('driveAll').addEventListener('click',function(){selectedDriveYears=monthYearOrder.slice();renderDriveControls();renderMemberDrive();});
+  document.getElementById('driveReset').addEventListener('click',function(){selectedDriveYears=[2569,2568,2567];renderDriveControls();renderMemberDrive();});
 
   // ---------- daily new members ----------
   var dailySelectedMonth = null;
