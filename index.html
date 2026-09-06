@@ -378,6 +378,10 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 .channel-slice path{stroke:var(--surface);stroke-width:2;stroke-linejoin:round;transition:filter .15s}
 .channel-slice:hover path,.channel-slice:focus path,.channel-slice.active path{filter:brightness(1.13);stroke:var(--ink);stroke-width:2.5}
 .channel-slice text{font-family:var(--mono);font-size:16px;font-weight:600;fill:var(--on-accent);pointer-events:none;text-anchor:middle;dominant-baseline:middle}
+.channel-slice circle{stroke:var(--surface);stroke-width:2;transition:filter .15s}
+.channel-slice:hover circle,.channel-slice:focus circle,.channel-slice.active circle{filter:brightness(1.13);stroke:var(--ink);stroke-width:2.5}
+.channel-slice line{stroke:var(--ink-soft);stroke-width:1.4;opacity:.55}
+.channel-slice-dot text{font-size:11px}
 .channel-pie-help{text-align:center;margin:0;font-size:11.5px;color:var(--muted)}
 .channel-pie-detail{min-height:58px;padding:10px 12px;margin:10px auto 0;border-radius:8px;background:var(--paper-2);font-size:12.5px;line-height:1.5;max-width:410px;color:var(--ink-soft);overflow-wrap:anywhere}
 .channel-pie-detail b{display:block;font-weight:500;color:var(--ink)}
@@ -544,7 +548,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     <div style="height:16px"></div>
     <div class="sec-head"><h2 style="font-size:17px">ช่องทางที่มา</h2><span class="hint">รหัส TR_CHANNEL_TYPE — ป้ายกำกับเป็นการตีความ ยังไม่ยืนยัน</span></div>
     <div class="sec-rule"></div>
-    <div class="card bars" id="ctBars" style="--labw:190px"></div>
+    <div class="card channel-pie-card" id="ctPie"></div>
   </div>
 </section>
 
@@ -1118,19 +1122,33 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   }
 
 
-  // ---------- recruitment-channel pie ----------
+  // ---------- pie card (recruitment channel + channel type) ----------
   // Slice area uses an additive measure only. Averages remain a label, never a share of summed averages.
-  function channelPieGroups(rows){
-    if(!Array.isArray(rows)||!rows.length||rows.some(function(r){
+  function pieRowsValid(rows){
+    return Array.isArray(rows)&&rows.length>0&&!rows.some(function(r){
       return !Number.isInteger(r.members)||r.members<0||!Number.isFinite(r.money)||r.money<0;
-    }))return null;
-    var ordered=rows.slice().sort(function(a,b){return b.members-a.members||String(a.name).localeCompare(String(b.name),'th');});
+    });
+  }
+  function sortByMembers(rows){
+    return rows.slice().sort(function(a,b){return b.members-a.members||String(a.name).localeCompare(String(b.name),'th');});
+  }
+  function channelPieGroups(rows){
+    if(!pieRowsValid(rows))return null;
+    var ordered=sortByMembers(rows);
     var groups=ordered.slice(0,5).map(function(r){return {name:r.name,full:r.full||r.name,members:r.members,money:r.money,count:1};});
     var rest=ordered.slice(5);
     if(rest.length)groups.push({name:'อื่น ๆ',full:'ช่องทางอื่น ๆ '+rest.length+' ช่องทาง',count:rest.length,
       members:rest.reduce(function(n,r){return n+r.members;},0),
       money:rest.reduce(function(n,r){return n+r.money;},0)});
     return groups;
+  }
+  // Every TR_CHANNEL_TYPE code keeps its own slice. Six codes, no "other" bucket, ordered by members.
+  function channelTypeGroups(rows){
+    if(!pieRowsValid(rows)||rows.some(function(r){return !r.code||!r.label;}))return null;
+    return sortByMembers(rows.map(function(r){
+      var name=r.code+' · '+r.label;
+      return {name:name,full:name,members:r.members,money:r.money,count:1};
+    }));
   }
   function channelPiePath(start,end){
     var cx=200,cy=200,r=166;
@@ -1139,18 +1157,19 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     if(end-start>=Math.PI*2-1e-9)return 'M 200 34 A 166 166 0 1 1 200 366 A 166 166 0 1 1 200 34 Z';
     return 'M 200 200 L '+a.join(' ')+' A 166 166 0 '+(end-start>Math.PI?1:0)+' 1 '+b.join(' ')+' Z';
   }
-  function renderChannelPie(){
-    var node=document.getElementById('chPie'),rows=D.channels,groups=channelPieGroups(rows);
+  // A slice this small is sub-pixel wide at true scale. Mark it with a rim dot instead of inflating its angle.
+  var TINY_SLICE=0.005,DOT_RADIUS=182,DOT_GAP=0.14;
+  function renderPieCard(node,groups,opt){
     node.innerHTML='';
-    if(!groups){node.appendChild(el('p','','ข้อมูลช่องทางยังไม่พร้อมแสดงเป็นพายกราฟ'));return;}
+    if(!groups){node.appendChild(el('p','',opt.emptyMessage));return;}
     var moneyMode=metric==='money',avgMode=metric==='avg',basis=moneyMode?'money':'members';
-    var totals=rows.reduce(function(t,r){t.members+=r.members;t.money+=r.money;return t;},{members:0,money:0});
+    var totals=groups.reduce(function(t,r){t.members+=r.members;t.money+=r.money;return t;},{members:0,money:0});
     var total=totals[basis],colors=['#4E93DB','#E3B655','#E38C4A','#A2AE69','#D68FA9','#8295A7'];
     var head=el('div','channel-pie-head'),intro=el('div');
-    var heading=el('h3');heading.textContent=moneyMode?'สัดส่วนเงินนำส่งงวดแรกตามช่องทาง':'สัดส่วนสมาชิกใหม่ตามช่องทาง';intro.appendChild(heading);
-    var sub=el('p');sub.textContent=avgMode?'ขนาดชิ้นพาย = สัดส่วนสมาชิก · ตัวเลขด้านขวา = เงินเฉลี่ยต่อคน':'5 ช่องทางที่มีสมาชิกมากที่สุด และช่องทางอื่น ๆ';intro.appendChild(sub);head.appendChild(intro);
+    var heading=el('h3');heading.textContent=moneyMode?opt.headingMoney:opt.headingMembers;intro.appendChild(heading);
+    var sub=el('p');sub.textContent=avgMode?opt.subAvg:opt.sub;intro.appendChild(sub);head.appendChild(intro);
     var summary=el('div','channel-pie-total'),summaryCap=el('span'),summaryValue=el('strong'),summaryUnit=el('small');
-    summaryCap.textContent=avgMode?'เงินงวดแรกเฉลี่ยทุกช่องทาง':'รวมทุกช่องทาง';
+    summaryCap.textContent=avgMode?opt.totalCaptionAvg:opt.totalCaption;
     summaryValue.textContent=avgMode?nf(totals.members?totals.money/totals.members:0,2):nf(total);
     summaryUnit.textContent=avgMode?'บาท/คน':moneyMode?'บาท':'คน';
     summary.appendChild(summaryCap);summary.appendChild(summaryValue);summary.appendChild(summaryUnit);head.appendChild(summary);node.appendChild(head);
@@ -1159,10 +1178,10 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     svg.setAttribute('viewBox','0 0 400 400');svg.setAttribute('class','channel-pie-svg');svg.setAttribute('role','group');
     svg.setAttribute('aria-label',heading.textContent+' รวม '+nf(total)+(moneyMode?' บาท':' คน')+' · ข้อมูลถึง '+summaryAsOf);
     figure.appendChild(svg);
-    var help=el('p','channel-pie-help');help.textContent='แตะชิ้นพายหรือเลือกชื่อช่องทางเพื่อดูรายละเอียด';figure.appendChild(help);
-    var detail=el('div','channel-pie-detail');detail.id='channelPieDetail';detail.setAttribute('role','status');detail.setAttribute('aria-live','polite');
+    var help=el('p','channel-pie-help');help.textContent=opt.help;figure.appendChild(help);
+    var detail=el('div','channel-pie-detail');detail.id=opt.detailId;detail.setAttribute('role','status');detail.setAttribute('aria-live','polite');
     detail.textContent='รวม '+nf(totals.members)+' คน · เงินงวดแรก '+nf(totals.money)+' บาท';figure.appendChild(detail);
-    var legend=el('ol','channel-pie-legend');legend.setAttribute('aria-label','ช่องทางและสัดส่วน');
+    var legend=el('ol','channel-pie-legend');legend.setAttribute('aria-label',opt.legendLabel);
     var slices=[],buttons=[];
     function select(index){
       slices.forEach(function(s,i){s.classList.toggle('active',i===index);});
@@ -1175,17 +1194,33 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       control.addEventListener('focus',function(){select(index);});
       control.addEventListener('click',function(){select(index);});
     }
-    var angle=-Math.PI/2;
+    function svgPoint(radius,a){return [(200+radius*Math.cos(a)).toFixed(2),(200+radius*Math.sin(a)).toFixed(2)];}
+    var angle=-Math.PI/2,lastDotAngle=null;
     groups.forEach(function(r,index){
       var share=total?r[basis]/total:0,end=angle+share*Math.PI*2;
-      var description=r.full+' · '+nf(r.members)+' คน · '+nf(r.money)+' บาท · '+nf(share*100,1)+'% ของ'+(moneyMode?'เงินงวดแรก':'สมาชิกทุกช่องทาง');
+      var description=r.full+' · '+nf(r.members)+' คน · '+nf(r.money)+' บาท · '+nf(share*100,1)+'% ของ'+(moneyMode?opt.shareOfMoney:opt.shareOfMembers);
       var group=document.createElementNS('http://www.w3.org/2000/svg','g');group.setAttribute('class','channel-slice');group.setAttribute('data-index',index);
       if(share>0){
         group.setAttribute('tabindex','0');group.setAttribute('role','button');group.setAttribute('aria-label',description);
         var title=document.createElementNS('http://www.w3.org/2000/svg','title');title.textContent=description;group.appendChild(title);
         var path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',channelPiePath(angle,end));path.setAttribute('fill',colors[index]);group.appendChild(path);
-        if(share>=0.025){
-          var label=document.createElementNS('http://www.w3.org/2000/svg','text'),mid=(angle+end)/2,rr=share>=0.08?106:128;
+        var mid=(angle+end)/2;
+        if(share<TINY_SLICE){
+          // Keep the wedge at its true angle; the dot only marks where it is so it stays readable and clickable.
+          group.setAttribute('class','channel-slice channel-slice-dot');
+          var dotAngle=(lastDotAngle!==null&&mid-lastDotAngle<DOT_GAP)?lastDotAngle+DOT_GAP:mid;
+          lastDotAngle=dotAngle;
+          var rim=svgPoint(158,mid),spot=svgPoint(DOT_RADIUS,dotAngle);
+          var lead=document.createElementNS('http://www.w3.org/2000/svg','line');
+          lead.setAttribute('x1',rim[0]);lead.setAttribute('y1',rim[1]);lead.setAttribute('x2',spot[0]);lead.setAttribute('y2',spot[1]);
+          lead.setAttribute('aria-hidden','true');group.appendChild(lead);
+          var dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+          dot.setAttribute('cx',spot[0]);dot.setAttribute('cy',spot[1]);dot.setAttribute('r','9.5');dot.setAttribute('fill',colors[index]);group.appendChild(dot);
+          var dotLabel=document.createElementNS('http://www.w3.org/2000/svg','text');
+          dotLabel.setAttribute('x',spot[0]);dotLabel.setAttribute('y',spot[1]);dotLabel.setAttribute('aria-hidden','true');
+          dotLabel.textContent=String(index+1);group.appendChild(dotLabel);
+        }else if(share>=0.025){
+          var label=document.createElementNS('http://www.w3.org/2000/svg','text'),rr=share>=0.08?106:128;
           label.setAttribute('x',200+rr*Math.cos(mid));label.setAttribute('y',200+rr*Math.sin(mid));label.setAttribute('aria-hidden','true');
           label.textContent=share>=0.08?nf(share*100,1)+'%':String(index+1);group.appendChild(label);
         }
@@ -1205,9 +1240,50 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       var empty=document.createElementNS('http://www.w3.org/2000/svg','text');empty.setAttribute('x','200');empty.setAttribute('y','200');empty.setAttribute('text-anchor','middle');empty.setAttribute('fill',cssvar('--muted'));empty.textContent='ยังไม่มีข้อมูลสำหรับตัวชี้วัดนี้';svg.appendChild(empty);
     }
     layout.appendChild(figure);layout.appendChild(legend);node.appendChild(layout);
-    var foot=el('p','channel-pie-note');foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+summaryAsOf+' · ชิ้นพายรวมครบ '+rows.length+' ช่องทาง โดยกลุ่ม “อื่น ๆ” รวมทุกช่องทางนอก 5 อันดับแรกตามจำนวนสมาชิก'+
-      (avgMode?' · ค่าเฉลี่ยคำนวณจากเงินรวม ÷ จำนวนสมาชิก ไม่ได้นำค่าเฉลี่ยมารวมเป็นสัดส่วน':'')+' · ';
-    var tableLink=el('a');tableLink.href='#chTable';tableLink.textContent='ดูตัวเลขแยกทุกช่องทางในตารางด้านล่าง';foot.appendChild(tableLink);node.appendChild(foot);
+    var foot=el('p','channel-pie-note');opt.footnote(foot,avgMode);node.appendChild(foot);
+  }
+  function renderChannelPie(){
+    var rows=D.channels;
+    renderPieCard(document.getElementById('chPie'),channelPieGroups(rows),{
+      emptyMessage:'ข้อมูลช่องทางยังไม่พร้อมแสดงเป็นพายกราฟ',
+      headingMembers:'สัดส่วนสมาชิกใหม่ตามช่องทาง',
+      headingMoney:'สัดส่วนเงินนำส่งงวดแรกตามช่องทาง',
+      sub:'5 ช่องทางที่มีสมาชิกมากที่สุด และช่องทางอื่น ๆ',
+      subAvg:'ขนาดชิ้นพาย = สัดส่วนสมาชิก · ตัวเลขด้านขวา = เงินเฉลี่ยต่อคน',
+      totalCaption:'รวมทุกช่องทาง',
+      totalCaptionAvg:'เงินงวดแรกเฉลี่ยทุกช่องทาง',
+      help:'แตะชิ้นพายหรือเลือกชื่อช่องทางเพื่อดูรายละเอียด',
+      detailId:'channelPieDetail',
+      legendLabel:'ช่องทางและสัดส่วน',
+      shareOfMembers:'สมาชิกทุกช่องทาง',
+      shareOfMoney:'เงินงวดแรก',
+      footnote:function(foot,avgMode){
+        foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+summaryAsOf+' · ชิ้นพายรวมครบ '+rows.length+' ช่องทาง โดยกลุ่ม “อื่น ๆ” รวมทุกช่องทางนอก 5 อันดับแรกตามจำนวนสมาชิก'+
+          (avgMode?' · ค่าเฉลี่ยคำนวณจากเงินรวม ÷ จำนวนสมาชิก ไม่ได้นำค่าเฉลี่ยมารวมเป็นสัดส่วน':'')+' · ';
+        var tableLink=el('a');tableLink.href='#chTable';tableLink.textContent='ดูตัวเลขแยกทุกช่องทางในตารางด้านล่าง';foot.appendChild(tableLink);
+      }
+    });
+  }
+  function renderChannelTypePie(){
+    var rows=D.channelTypes;
+    renderPieCard(document.getElementById('ctPie'),channelTypeGroups(rows),{
+      emptyMessage:'ข้อมูลช่องทางที่มายังไม่พร้อมแสดงเป็นพายกราฟ',
+      headingMembers:'สัดส่วนสมาชิกใหม่ตามช่องทางที่มา',
+      headingMoney:'สัดส่วนเงินนำส่งงวดแรกตามช่องทางที่มา',
+      sub:'รหัส TR_CHANNEL_TYPE ครบทุกรายการ เรียงตามจำนวนสมาชิก',
+      subAvg:'ขนาดชิ้นพาย = สัดส่วนสมาชิก · ตัวเลขด้านขวา = เงินเฉลี่ยต่อคน',
+      totalCaption:'รวมทุกช่องทางที่มา',
+      totalCaptionAvg:'เงินงวดแรกเฉลี่ยทุกช่องทางที่มา',
+      help:'แตะชิ้นพาย จุดกลมที่ขอบวง หรือเลือกชื่อช่องทางที่มาเพื่อดูรายละเอียด',
+      detailId:'channelTypePieDetail',
+      legendLabel:'ช่องทางที่มาและสัดส่วน',
+      shareOfMembers:'สมาชิกทุกช่องทางที่มา',
+      shareOfMoney:'เงินงวดแรก',
+      footnote:function(foot,avgMode){
+        foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+summaryAsOf+' · แสดงครบทุกรหัส '+rows.length+' รายการ ไม่ยุบเป็นกลุ่ม “อื่น ๆ” · ชิ้นที่เล็กกว่า 0.5% คงสัดส่วนจริงไว้และทำเครื่องหมายเป็นจุดกลมที่ขอบวง กดที่จุดเพื่อดูรายละเอียดได้'+
+          (avgMode?' · ค่าเฉลี่ยคำนวณจากเงินรวม ÷ จำนวนสมาชิก ไม่ได้นำค่าเฉลี่ยมารวมเป็นสัดส่วน':'');
+      }
+    });
   }
 
   // ---------- sortable table ----------
@@ -1331,9 +1407,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     renderMemberDrive();
     renderDailyMembers();
     renderChannelPie();
-    renderBars(document.getElementById('ctBars'), D.channelTypes.map(function(c){
-      return {name:c.code+' · '+c.label, members:c.members, money:c.money};
-    }));
+    renderChannelTypePie();
     renderBars(document.getElementById('ageBars'), D.ages);
     renderBars(document.getElementById('ocBars'), D.occupations);
     renderBars(document.getElementById('rgBars'), D.regions);
