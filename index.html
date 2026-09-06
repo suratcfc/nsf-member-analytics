@@ -972,10 +972,12 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       if(m<12)svg+='<text class="axis" x="'+(xx+plotW/24)+'" y="'+(H-20)+'" text-anchor="middle">'+mons[m]+'</text>';
     }
     var endLabels=[];
-    // Keep the approved July–December plan and its carry-over unchanged; do not invent a Jan–Jun target.
-    svg+='<line data-series="target" x1="'+x(md.startDate)+'" y1="'+y(md.carryOver)+'" x2="'+x(md.endDate)+'" y2="'+y(md.totalTarget)+'" stroke="'+cssvar('--gold')+'" stroke-width="3" stroke-dasharray="10 7"><title>แผนเดิม '+driveDate(md.startDate)+' ถึง '+driveDate(md.endDate)+' · จาก '+nf(md.carryOver)+' สู่ '+nf(md.totalTarget)+' คน</title></line>';
-    svg+='<circle cx="'+x(md.startDate)+'" cy="'+y(md.carryOver)+'" r="4" fill="'+cssvar('--gold')+'"><title>เริ่มแผน '+driveDate(md.startDate)+' · ยอดยกมา '+nf(md.carryOver)+' คน</title></circle>';
-    endLabels.push({x:x(md.endDate),y:y(md.totalTarget),text:'เป้าหมาย '+nf(md.totalTarget),color:cssvar('--gold')});
+    // User-approved calendar-year target: 0 at the start of January, 146,000 by the end of December.
+    // Use the full chart span (12 equal month intervals); keep observed data and historical plan metadata unchanged.
+    var targetStartDate='2026-01-01',targetEndDate='2026-12-31';
+    svg+='<line data-series="target" x1="'+L+'" y1="'+y(0)+'" x2="'+(W-R)+'" y2="'+y(md.totalTarget)+'" stroke="'+cssvar('--gold')+'" stroke-width="3" stroke-dasharray="10 7"><title>เป้าหมายทั้งปี '+driveDate(targetStartDate)+' ถึง '+driveDate(targetEndDate)+' · เพิ่มแบบเฉลี่ยตลอด 12 เดือน จาก 0 สู่ '+nf(md.totalTarget)+' คน</title></line>';
+    svg+='<circle cx="'+L+'" cy="'+y(0)+'" r="4" fill="'+cssvar('--gold')+'"><title>เริ่มเป้าหมาย '+driveDate(targetStartDate)+' · 0 คน</title></circle>';
+    endLabels.push({x:W-R,y:y(md.totalTarget),text:'เป้าหมาย '+nf(md.totalTarget),color:cssvar('--gold')});
     series.slice().reverse().forEach(function(s){
       var color=monthYearColors[s.year],points=[[L,y(0)]].concat(s.points.map(function(p){return[x(p.date),y(p.members)];}));
       svg+='<polyline class="series-line" data-year="'+s.year+'" stroke="'+color+'" stroke-width="'+(s.year===2569?3:2.5)+'"'+(driveDash[s.year]?' stroke-dasharray="'+driveDash[s.year]+'"':'')+' points="'+points.map(function(p){return p.join(',');}).join(' ')+'"><title>ผลจริงสะสมปี '+s.year+' ถึง '+driveDate(s.asOf)+' รวม '+nf(s.members)+' คน</title></polyline>';
@@ -999,7 +1001,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     svgNode.setAttribute('aria-label','ยอดสมาชิกใหม่สะสม มกราคมถึงธันวาคม · แสดงปี '+series.map(function(s){return s.year;}).join(', ')+' · เส้นเป้าหมาย '+nf(md.totalTarget)+' คน');
     document.getElementById('driveNote').textContent='แหล่งข้อมูล: Tableau · VIEW_BI_DS · จุดบนเส้นคือยอดสะสม ณ สิ้นเดือน; ปี 2569 เดือนล่าสุดถึง '+driveDate(latest)+
       ' และไม่แสดงค่าคาดการณ์หลังวันดังกล่าว · ปีเก่าแสดงตามช่วงข้อมูลที่มีจริง'+
-      ' · เส้นประสีทองคงแผนเดิม '+driveDate(md.startDate)+'–'+driveDate(md.endDate)+' จากยอดยกมา '+nf(md.carryOver)+' สู่เป้าหมาย '+nf(md.totalTarget)+' คน';
+      ' · เส้นประสีทองคือเป้าหมายทั้งปี '+driveDate(targetStartDate)+'–'+driveDate(targetEndDate)+' เพิ่มแบบเฉลี่ยตลอด 12 เดือน จาก 0 สู่ '+nf(md.totalTarget)+' คน';
   }
   renderDriveControls();
   document.getElementById('driveAll').addEventListener('click',function(){selectedDriveYears=monthYearOrder.slice();renderDriveControls();renderMemberDrive();});
