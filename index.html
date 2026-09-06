@@ -115,6 +115,8 @@ section{padding:52px 0 4px;scroll-margin-top:142px}
 .sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px}
 .sec-head h2{font-family:var(--display);font-weight:600;font-size:22px;margin:0;color:var(--ink)}
 .sec-head .hint{font-size:13px;color:var(--muted)}
+.sec-head .asof-tag{color:var(--ink-soft);white-space:nowrap}
+.asof-note{margin:11px 2px 0;font-size:12px;line-height:1.7;color:var(--muted)}
 .sec-rule{height:1px;background:var(--line);margin:14px 0 26px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 6px 20px rgba(0,0,0,.22)}
 
@@ -554,43 +556,47 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 
 <section id="แคมเปญ">
   <div class="wrap">
-    <div class="sec-head"><h2>แคมเปญ</h2><span class="hint">14 แคมเปญที่มีสมาชิกมากที่สุด</span></div>
+    <div class="sec-head"><h2>แคมเปญ</h2><span class="hint">14 แคมเปญที่มีสมาชิกมากที่สุด · <span class="asof-tag" id="cpTag"></span></span></div>
     <div class="sec-rule"></div>
     <div class="card tblwrap"><table id="cpTable"></table></div>
+    <p class="asof-note" id="cpAsOf"></p>
   </div>
 </section>
 
 <section id="อายุ">
   <div class="wrap">
-    <div class="sec-head"><h2>ช่วงอายุ</h2><span class="hint">คำนวณจากปีเกิดเทียบปี 2569</span></div>
+    <div class="sec-head"><h2>ช่วงอายุ</h2><span class="hint">คำนวณจากปีเกิดเทียบปี 2569 · <span class="asof-tag" id="ageTag"></span></span></div>
     <div class="sec-rule"></div>
     <div class="card bars" id="ageBars" style="--labw:130px"></div>
     <div style="height:16px"></div>
     <div class="card tblwrap"><table id="ageTable"></table></div>
+    <p class="asof-note" id="ageAsOf"></p>
   </div>
 </section>
 
 <section id="อาชีพ">
   <div class="wrap">
-    <div class="sec-head"><h2>อาชีพ</h2><span class="hint"></span></div>
+    <div class="sec-head"><h2>อาชีพ</h2><span class="hint"><span class="asof-tag" id="ocTag"></span></span></div>
     <div class="sec-rule"></div>
     <div class="card bars" id="ocBars" style="--labw:230px"></div>
+    <p class="asof-note" id="ocAsOf"></p>
   </div>
 </section>
 
 <section id="พื้นที่">
   <div class="wrap">
-    <div class="sec-head"><h2>พื้นที่</h2><span class="hint">ภูมิภาค และ 20 จังหวัดแรก</span></div>
+    <div class="sec-head"><h2>พื้นที่</h2><span class="hint">ภูมิภาค และ 20 จังหวัดแรก · <span class="asof-tag" id="rgTag"></span></span></div>
     <div class="sec-rule"></div>
     <div class="card bars" id="rgBars" style="--labw:190px"></div>
     <div style="height:16px"></div>
     <div class="card tblwrap"><table id="pvTable"></table></div>
+    <p class="asof-note" id="rgAsOf"></p>
   </div>
 </section>
 
 <section id="สถานะ">
   <div class="wrap">
-    <div class="sec-head"><h2>เพศ และสถานะสมาชิก</h2><span class="hint">สถานะ ณ วันที่ดึงข้อมูล</span></div>
+    <div class="sec-head"><h2>เพศ และสถานะสมาชิก</h2><span class="hint"><span class="asof-tag" id="gsTag"></span></span></div>
     <div class="sec-rule"></div>
     <div class="split2">
       <div class="card">
@@ -610,6 +616,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     </div>
     <div style="height:16px"></div>
     <div class="card tblwrap"><table id="stTable"></table></div>
+    <p class="asof-note" id="gsAsOf"></p>
   </div>
 </section>
 
@@ -648,7 +655,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   if(LIVE){
     D.meta = Object.assign({}, D.meta, LIVE.meta || {});
     D.totals = Object.assign({}, D.totals, LIVE.totals || {});
-    D.followThrough = Object.assign({}, D.followThrough, LIVE.followThrough || {});
     D.memberDrive = Object.assign({}, D.memberDrive, LIVE.memberDrive || {});
     D.priorYear = Object.assign({}, D.priorYear, LIVE.priorYear || {});
     ['months','priorMonths','historicalYears','cumulativeYears','daily','priorDaily','channels','channelTypes'].forEach(function(key){
@@ -682,20 +688,24 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   function cssvar(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
   function el(tag,cls,html){ var e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
 
+  // Every date shown comes from meta, so a card can never imply it shares the live total's date.
+  function asOfSummary(){
+    return 'ยอดรวม รายเดือน และช่องทาง ณ ' + summaryAsOf +
+      ' · อาชีพและพื้นที่ ณ ' + memberBreakdownAsOf + ' (ตัวเลขเงิน ณ ' + detailAsOf + ')' +
+      ' · อายุ เพศ สถานะ และแคมเปญ ณ ' + detailAsOf;
+  }
+
   // ---------- header numbers ----------
   var summaryAsOf = D.meta.summaryAsOf || D.meta.dataAsOf;
   var memberBreakdownAsOf = D.meta.memberBreakdownAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
+  var detailAsOf = D.meta.detailAsOf || D.meta.dataAsOf;
   document.getElementById('periodLine').textContent =
     D.meta.periodLabel + ' · ยอดสมาชิกล่าสุดจาก ' + (D.meta.latestSource || D.meta.source);
-  document.getElementById('asof').textContent =
-    'ยอดรวม/รายเดือน/ช่องทาง Tableau ณ ' + summaryAsOf + ' · อาชีพ/พื้นที่ ณ ' + memberBreakdownAsOf +
-    ' · มิติอื่น ณ ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+  document.getElementById('asof').textContent = asOfSummary();
   document.getElementById('fSource').textContent =
     (D.meta.summarySource || D.meta.source) + ' · มิติ snapshot: ' + D.meta.source;
   document.getElementById('fDef').textContent = D.meta.definition;
-  document.getElementById('fAsOf').textContent =
-    'ยอดรวม/รายเดือน/ช่องทาง ' + summaryAsOf + ' · อาชีพ/พื้นที่ ' + memberBreakdownAsOf +
-    ' · มิติอื่น ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+  document.getElementById('fAsOf').textContent = asOfSummary();
 
   // All hero metrics use the same merged snapshot and the existing annual target.
   function renderHeaderMetrics(){
@@ -1401,6 +1411,45 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     D.caveats.forEach(function(t){ u.appendChild(el('li','',t)); });
   })();
 
+  // ---------- snapshot date labels ----------
+  // Totals are summed from the rows themselves so the wording cannot go stale
+  // the way a hard-coded number would.
+  function asOfNote(id, rows, opt){
+    var node = document.getElementById(id); if(!node) return;
+    var sum = rows.reduce(function(n,r){ return n + (Number(r.members) || 0); }, 0);
+    var headline = Number(D.totals.members) || 0;
+    var behind = sum < headline;
+    var parts = [];
+    if(opt.moneyAsOf){
+      parts.push('ตัวเลขในส่วนนี้รวมได้ ' + nf(sum) + ' คน ตามข้อมูลวันที่ ' + opt.membersAsOf +
+        (behind ? ' น้อยกว่ายอดรวมด้านบนสุดของหน้าที่ ' + nf(headline) + ' คน' : '') +
+        ' ส่วนตัวเลขเงินเก่ากว่านั้นอีก คือหยุดอยู่ที่ ' + opt.moneyAsOf);
+      if(opt.avgNote){
+        parts.push('ช่องเฉลี่ยบาทต่อคน หารด้วยจำนวนคนของวันที่ ' + opt.moneyAsOf + ' เพื่อให้ตรงรอบเดียวกับเงิน');
+      }
+    }else{
+      parts.push(behind
+        ? 'ตัวเลขในส่วนนี้รวมได้ ' + nf(sum) + ' คน น้อยกว่ายอดรวมด้านบนสุดของหน้าที่ ' + nf(headline) +
+          ' คน เพราะยอดรวมอัปเดตทุก 10 นาที ส่วนข้อมูลชุดนี้ยังหยุดอยู่ที่ ' + opt.membersAsOf
+        : 'ตัวเลขในส่วนนี้รวมได้ ' + nf(sum) + ' คน ตามข้อมูลวันที่ ' + opt.membersAsOf);
+    }
+    node.textContent = parts.join(' · ');
+  }
+  function renderAsOfLabels(){
+    var single = 'ข้อมูล ณ ' + detailAsOf;
+    var split = 'จำนวนคน ณ ' + memberBreakdownAsOf + ' · เงิน ณ ' + detailAsOf;
+    [['cpTag',single],['ageTag',single],['gsTag',single],['ocTag',split],['rgTag',split]].forEach(function(p){
+      var node = document.getElementById(p[0]); if(node) node.textContent = p[1];
+    });
+    asOfNote('cpAsOf', D.campaigns, {membersAsOf: detailAsOf});
+    asOfNote('ageAsOf', D.ages, {membersAsOf: detailAsOf});
+    asOfNote('gsAsOf', D.genders, {membersAsOf: detailAsOf});
+    // Occupations only show an average when the metric toggle asks for one.
+    asOfNote('ocAsOf', D.occupations, {membersAsOf: memberBreakdownAsOf, moneyAsOf: detailAsOf, avgNote: metric === 'avg'});
+    // The province table always carries an average column.
+    asOfNote('rgAsOf', D.regions, {membersAsOf: memberBreakdownAsOf, moneyAsOf: detailAsOf, avgNote: true});
+  }
+
   // ---------- render everything ----------
   function renderAll(){
     renderMonths();
@@ -1426,6 +1475,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
        colMembers, colShare, colMoney], true, 'members');
 
     renderSplit();
+    renderAsOfLabels();
   }
   renderAll();
 
