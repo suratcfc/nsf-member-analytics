@@ -578,7 +578,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   <div class="wrap">
     <div class="sec-head"><h2>อาชีพ</h2><span class="hint"><span class="asof-tag" id="ocTag"></span></span></div>
     <div class="sec-rule"></div>
-    <div class="card bars" id="ocBars" style="--labw:230px"></div>
+    <div class="card channel-pie-card" id="ocPie"></div>
     <p class="asof-note" id="ocAsOf"></p>
   </div>
 </section>
@@ -587,7 +587,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   <div class="wrap">
     <div class="sec-head"><h2>พื้นที่</h2><span class="hint">ภูมิภาค และ 20 จังหวัดแรก · <span class="asof-tag" id="rgTag"></span></span></div>
     <div class="sec-rule"></div>
-    <div class="card bars" id="rgBars" style="--labw:190px"></div>
+    <div class="card channel-pie-card" id="rgPie"></div>
     <div style="height:16px"></div>
     <div class="card tblwrap"><table id="pvTable"></table></div>
     <p class="asof-note" id="rgAsOf"></p>
@@ -657,7 +657,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     D.totals = Object.assign({}, D.totals, LIVE.totals || {});
     D.memberDrive = Object.assign({}, D.memberDrive, LIVE.memberDrive || {});
     D.priorYear = Object.assign({}, D.priorYear, LIVE.priorYear || {});
-    ['months','priorMonths','historicalYears','cumulativeYears','daily','priorDaily','channels','channelTypes','ages'].forEach(function(key){
+    ['months','priorMonths','historicalYears','cumulativeYears','daily','priorDaily','channels','channelTypes','ages','occupations','regions','provinces'].forEach(function(key){
       if(Array.isArray(LIVE[key])) D[key] = LIVE[key];
     });
   }
@@ -690,9 +690,8 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 
   // Every date shown comes from meta, so a card can never imply it shares the live total's date.
   function asOfSummary(){
-    return 'ยอดรวม รายเดือน และช่องทาง ณ ' + summaryAsOf +
-      ' · อาชีพและพื้นที่ ณ ' + memberBreakdownAsOf + ' (ตัวเลขเงิน ณ ' + detailAsOf + ')' +
-      ' · อายุ ณ ' + ageAsOf + ' · เพศ สถานะ และแคมเปญ ณ ' + detailAsOf;
+    return 'ยอดรวม รายเดือน ช่องทาง ช่วงอายุ อาชีพ และพื้นที่ ณ ' + summaryAsOf +
+      ' · เพศ สถานะ และแคมเปญ ณ ' + detailAsOf;
   }
 
   // ---------- header numbers ----------
@@ -700,6 +699,10 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   var memberBreakdownAsOf = D.meta.memberBreakdownAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
   var detailAsOf = D.meta.detailAsOf || D.meta.dataAsOf;
   var ageAsOf = D.meta.ageAsOf || detailAsOf;
+  var occupationAsOf = D.meta.occupationAsOf || memberBreakdownAsOf;
+  var occupationMoneyAsOf = D.meta.occupationMoneyAsOf || detailAsOf;
+  var areaAsOf = D.meta.areaAsOf || memberBreakdownAsOf;
+  var areaMoneyAsOf = D.meta.areaMoneyAsOf || detailAsOf;
   document.getElementById('periodLine').textContent =
     D.meta.periodLabel + ' · ยอดสมาชิกล่าสุดจาก ' + (D.meta.latestSource || D.meta.source);
   document.getElementById('asof').textContent = asOfSummary();
@@ -1133,7 +1136,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   }
 
 
-  // ---------- pie card (recruitment channel + channel type + age range) ----------
+  // ---------- pie card (recruitment channel + channel type + age + occupation + area) ----------
   // Slice area uses an additive measure only. Averages remain a label, never a share of summed averages.
   function pieRowsValid(rows){
     return Array.isArray(rows)&&rows.length>0&&!rows.some(function(r){
@@ -1241,7 +1244,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       var item=el('li'),button=el('button','channel-pie-item');button.type='button';button.style.setProperty('--slice-color',colors[index]);button.setAttribute('aria-label','ดูรายละเอียด '+description);
       var key=el('span','channel-pie-key');key.textContent=index+1;key.setAttribute('aria-hidden','true');button.appendChild(key);
       var name=el('span','channel-pie-name');name.textContent=r.name;
-      var note=el('small');note.textContent=r.count>1?r.count+' ช่องทาง · ดูแยกในตาราง':(metric==='members'?'เงินงวดแรก '+money(r.money)+' บาท':nf(r.members)+' คน');name.appendChild(note);button.appendChild(name);
+      var note=el('small');note.textContent=r.count>1?r.count+' '+(opt.groupedUnit||'ช่องทาง')+' · รวมไว้ในกลุ่มนี้':(metric==='members'?'เงินงวดแรก '+money(r.money)+' บาท':nf(r.members)+' คน');name.appendChild(note);button.appendChild(name);
       var value=el('span','channel-pie-value');
       value.textContent=avgMode?nf(r.members?r.money/r.members:0,2)+' บาท/คน':nf(r[basis])+(moneyMode?' บาท':' คน');
       var shareLabel=el('small');shareLabel.textContent=nf(share*100,1)+'%'+(avgMode?' ของสมาชิก':'');value.appendChild(shareLabel);button.appendChild(value);
@@ -1319,6 +1322,57 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
         foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+ageAsOf+' · คำนวณจากปีเกิดเทียบปี 2569 และกระทบยอดกับสมาชิกใหม่สะสมแล้ว · แสดงครบทั้ง '+rows.length+' ช่วงอายุ โดยชิ้นที่เล็กกว่า 0.5% คงสัดส่วนจริงไว้และทำเครื่องหมายเป็นจุดกลมที่ขอบวง'+
           (avgMode?' · ค่าเฉลี่ยคำนวณจากเงินรวม ÷ จำนวนสมาชิก ไม่ได้นำค่าเฉลี่ยมารวมเป็นสัดส่วน':'')+' · ';
         var tableLink=el('a');tableLink.href='#ageTable';tableLink.textContent='ดูตัวเลขครบทุกช่วงอายุในตารางด้านล่าง';foot.appendChild(tableLink);
+      }
+    });
+  }
+  function renderOccupationPie(){
+    var rows=D.occupations;
+    var groups=null;
+    if(pieRowsValid(rows)){
+      var ordered=sortByMembers(rows);
+      var visibleCount=ordered.length<=8?ordered.length:7;
+      groups=ordered.slice(0,visibleCount).map(function(r){return {name:r.name,full:r.name,members:r.members,money:r.money,count:1};});
+      var rest=ordered.slice(visibleCount);
+      if(rest.length)groups.push({name:'อาชีพอื่น ๆ',full:'อาชีพอื่น ๆ '+rest.length+' กลุ่ม',count:rest.length,
+        members:rest.reduce(function(n,r){return n+r.members;},0),money:rest.reduce(function(n,r){return n+r.money;},0)});
+    }
+    var asOfLabel=occupationAsOf===occupationMoneyAsOf?occupationAsOf:'จำนวนคน '+occupationAsOf+' · เงิน '+occupationMoneyAsOf;
+    renderPieCard(document.getElementById('ocPie'),groups,{
+      emptyMessage:'ข้อมูลอาชีพยังไม่พร้อมแสดงเป็นพายกราฟ',
+      headingMembers:'สัดส่วนสมาชิกใหม่ตามอาชีพ',
+      headingMoney:'สัดส่วนเงินนำส่งงวดแรกตามอาชีพ',
+      sub:'กลุ่มอาชีพเรียงตามจำนวนสมาชิก',
+      subAvg:'ขนาดชิ้นพาย = สัดส่วนสมาชิก · ตัวเลขด้านขวา = เงินเฉลี่ยต่อคน',
+      totalCaption:'รวมทุกอาชีพ',totalCaptionAvg:'เงินงวดแรกเฉลี่ยทุกอาชีพ',
+      help:'แตะชิ้นพาย จุดกลมที่ขอบวง หรือเลือกอาชีพเพื่อดูรายละเอียด',
+      detailId:'occupationPieDetail',legendLabel:'อาชีพและสัดส่วน',
+      shareOfMembers:'สมาชิกทุกอาชีพ',shareOfMoney:'เงินงวดแรกทุกอาชีพ',
+      groupedUnit:'กลุ่มอาชีพ',asOf:asOfLabel,
+      footnote:function(foot,avgMode){
+        foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+asOfLabel+' · กระทบยอดกับสมาชิกใหม่สะสมแล้ว'+
+          (rest&&rest.length?' · แสดง 7 อาชีพที่มีสมาชิกมากที่สุด และรวมอีก '+rest.length+' กลุ่มเป็น “อาชีพอื่น ๆ”':' · แสดงครบทุกอาชีพ')+
+          (avgMode?' · ค่าเฉลี่ยคำนวณจากเงินรวม ÷ จำนวนสมาชิก ไม่ได้นำค่าเฉลี่ยมารวมเป็นสัดส่วน':'');
+      }
+    });
+  }
+  function renderRegionPie(){
+    var rows=D.regions;
+    var groups=pieRowsValid(rows)?sortByMembers(rows).map(function(r){return {name:r.name,full:r.name,members:r.members,money:r.money,count:1};}):null;
+    var asOfLabel=areaAsOf===areaMoneyAsOf?areaAsOf:'จำนวนคน '+areaAsOf+' · เงิน '+areaMoneyAsOf;
+    renderPieCard(document.getElementById('rgPie'),groups,{
+      emptyMessage:'ข้อมูลพื้นที่ยังไม่พร้อมแสดงเป็นพายกราฟ',
+      headingMembers:'สัดส่วนสมาชิกใหม่ตามภูมิภาค',
+      headingMoney:'สัดส่วนเงินนำส่งงวดแรกตามภูมิภาค',
+      sub:'แสดงครบทุกภูมิภาค เรียงตามจำนวนสมาชิก',
+      subAvg:'ขนาดชิ้นพาย = สัดส่วนสมาชิก · ตัวเลขด้านขวา = เงินเฉลี่ยต่อคน',
+      totalCaption:'รวมทุกภูมิภาค',totalCaptionAvg:'เงินงวดแรกเฉลี่ยทุกภูมิภาค',
+      help:'แตะชิ้นพาย จุดกลมที่ขอบวง หรือเลือกภูมิภาคเพื่อดูรายละเอียด',
+      detailId:'regionPieDetail',legendLabel:'ภูมิภาคและสัดส่วน',
+      shareOfMembers:'สมาชิกทุกภูมิภาค',shareOfMoney:'เงินงวดแรกทุกภูมิภาค',asOf:asOfLabel,
+      footnote:function(foot,avgMode){
+        foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+asOfLabel+' · แสดงครบทุกภูมิภาคและกระทบยอดกับสมาชิกใหม่สะสมแล้ว'+
+          (avgMode?' · ค่าเฉลี่ยคำนวณจากเงินรวม ÷ จำนวนสมาชิก ไม่ได้นำค่าเฉลี่ยมารวมเป็นสัดส่วน':'')+' · ';
+        var tableLink=el('a');tableLink.href='#pvTable';tableLink.textContent='ดูรายละเอียดจังหวัดในตารางด้านล่าง';foot.appendChild(tableLink);
       }
     });
   }
@@ -1465,17 +1519,18 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   function renderAsOfLabels(){
     var single = 'ข้อมูล ณ ' + detailAsOf;
     var ageSingle = 'ข้อมูล ณ ' + ageAsOf;
-    var split = 'จำนวนคน ณ ' + memberBreakdownAsOf + ' · เงิน ณ ' + detailAsOf;
-    [['cpTag',single],['ageTag',ageSingle],['gsTag',single],['ocTag',split],['rgTag',split]].forEach(function(p){
+    var occupationSingle = occupationAsOf===occupationMoneyAsOf?'ข้อมูล ณ '+occupationAsOf:'จำนวนคน ณ '+occupationAsOf+' · เงิน ณ '+occupationMoneyAsOf;
+    var areaSingle = areaAsOf===areaMoneyAsOf?'ข้อมูล ณ '+areaAsOf:'จำนวนคน ณ '+areaAsOf+' · เงิน ณ '+areaMoneyAsOf;
+    [['cpTag',single],['ageTag',ageSingle],['gsTag',single],['ocTag',occupationSingle],['rgTag',areaSingle]].forEach(function(p){
       var node = document.getElementById(p[0]); if(node) node.textContent = p[1];
     });
     asOfNote('cpAsOf', D.campaigns, {membersAsOf: detailAsOf});
     asOfNote('ageAsOf', D.ages, {membersAsOf: ageAsOf});
     asOfNote('gsAsOf', D.genders, {membersAsOf: detailAsOf});
     // Occupations only show an average when the metric toggle asks for one.
-    asOfNote('ocAsOf', D.occupations, {membersAsOf: memberBreakdownAsOf, moneyAsOf: detailAsOf, avgNote: metric === 'avg'});
+    asOfNote('ocAsOf', D.occupations, occupationAsOf===occupationMoneyAsOf?{membersAsOf:occupationAsOf}:{membersAsOf:occupationAsOf,moneyAsOf:occupationMoneyAsOf,avgNote:metric==='avg'});
     // The province table always carries an average column.
-    asOfNote('rgAsOf', D.regions, {membersAsOf: memberBreakdownAsOf, moneyAsOf: detailAsOf, avgNote: true});
+    asOfNote('rgAsOf', D.regions, areaAsOf===areaMoneyAsOf?{membersAsOf:areaAsOf}:{membersAsOf:areaAsOf,moneyAsOf:areaMoneyAsOf,avgNote:true});
   }
 
   // ---------- render everything ----------
@@ -1486,8 +1541,8 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     renderChannelPie();
     renderChannelTypePie();
     renderAgePie();
-    renderBars(document.getElementById('ocBars'), D.occupations);
-    renderBars(document.getElementById('rgBars'), D.regions);
+    renderOccupationPie();
+    renderRegionPie();
 
     renderTable(document.getElementById('chTable'), D.channels,
       [nameCol('ช่องทาง'), colMembers, colShare, colMoney, colAvg], true);

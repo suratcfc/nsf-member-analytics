@@ -317,6 +317,42 @@ function channelTypeRows(rows) {
     .sort((a, b) => b.members - a.members || b.money - a.money);
 }
 
+function dimensionRows(rows, label) {
+  const grouped = new Map();
+  for (const row of rows) {
+    const name = textField(row, "name", label);
+    const current = grouped.get(name) || { name, members: 0, money: 0 };
+    current.members += Math.round(numberField(row, "members", label));
+    current.money = roundMoney(current.money + numberField(row, "money", label));
+    grouped.set(name, current);
+  }
+  return [...grouped.values()].sort((a, b) => b.members - a.members || b.money - a.money || a.name.localeCompare(b.name, "th"));
+}
+
+function validateDimensionRows(rows, totalMembers, totalMoney, label) {
+  if (!rows.length) throw new Error(`${label} returned no aggregate groups`);
+  for (const row of rows) {
+    if (!row.name || !Number.isInteger(row.members) || row.members < 0 || !Number.isFinite(row.money) || row.money < 0) {
+      throw new Error(`${label} returned an invalid aggregate group`);
+    }
+  }
+  assertClose(sum(rows, "members"), totalMembers, 0, `${label} member counts`);
+  assertClose(roundMoney(sum(rows, "money")), totalMoney, 1, `${label} money`);
+  return rows;
+}
+
+function topRowsWithOther(rows, limit, unit) {
+  const top = rows.slice(0, limit);
+  const rest = rows.slice(limit);
+  if (!rest.length) return top;
+  top.push({
+    name: `${unit}อื่นๆ (${rest.length} ${unit})`,
+    members: sum(rest, "members"),
+    money: roundMoney(sum(rest, "money"))
+  });
+  return top;
+}
+
 function ageCondition(group) {
   if (group.unknown) {
     return `ISNULL([วดป_วันเกิด]) OR YEAR([วดป_วันเกิด]) > ${YEAR_AD} OR ${YEAR_AD} - YEAR([วดป_วันเกิด]) < 15`;
@@ -475,7 +511,7 @@ try {
   const asOf = normalizeDate(rawAsOf, "New-member summary query");
   const priorAsOf = `${PRIOR_YEAR_AD}${asOf.slice(4)}`;
 
-  const [monthResult, dailyResult, channelResult, channelTypeResult, ageResult, priorSummaryRows, priorMonthResult, priorDailyResult] = await Promise.all([
+  const [monthResult, dailyResult, channelResult, channelTypeResult, ageResult, occupationResult, regionResult, provinceResult, priorSummaryRows, priorMonthResult, priorDailyResult] = await Promise.all([
     queryDatasource(token, "Monthly aggregate query", [
       { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
@@ -496,6 +532,21 @@ try {
       { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
     ], ["1", "3"]),
     queryDatasource(token, "Age aggregate query", ageFields(), ["1", "3"]),
+    queryDatasource(token, "Occupation aggregate query", [
+      { fieldCaption: "อาชีพ", fieldAlias: "name" },
+      { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
+      { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
+    ], ["1", "3"]),
+    queryDatasource(token, "Region aggregate query", [
+      { fieldCaption: "ภาค", fieldAlias: "name" },
+      { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
+      { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
+    ], ["1", "3"]),
+    queryDatasource(token, "Province aggregate query", [
+      { fieldCaption: "จังหวัด", fieldAlias: "name" },
+      { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
+      { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
+    ], ["1", "3"]),
     queryDatasource(token, "Prior-year summary query", [
       calculation("members", "COUNTD([INVESTOR_CODE])"),
       calculation("money", "SUM([PRINCIPLE])")
@@ -544,7 +595,11 @@ try {
   const channels = channelRows(channelResult);
   const channelTypes = channelTypeRows(channelTypeResult);
   const ages = ageRows(expectSingleRow(ageResult, "Age aggregate query"), members, money);
-  if (!months.length || !priorMonths.length || !daily.length || !priorDaily.length || !channels.length || !channelTypes.length || !ages.length) {
+  const occupations = validateDimensionRows(dimensionRows(occupationResult, "Occupation aggregate query"), members, money, "Occupation aggregate query");
+  const regions = validateDimensionRows(dimensionRows(regionResult, "Region aggregate query"), members, money, "Region aggregate query");
+  const allProvinces = validateDimensionRows(dimensionRows(provinceResult, "Province aggregate query"), members, money, "Province aggregate query");
+  const provinces = topRowsWithOther(allProvinces, 20, "จังหวัด");
+  if (!months.length || !priorMonths.length || !daily.length || !priorDaily.length || !channels.length || !channelTypes.length || !ages.length || !occupations.length || !regions.length || !provinces.length) {
     throw new Error("One or more approved aggregate breakdowns returned no rows");
   }
   if (!Number.isInteger(priorMembers) || priorMembers < 1 || priorMembers > 1_000_000) {
@@ -630,7 +685,11 @@ try {
       comparisonBasis: "เดือนที่จบแล้วเทียบเต็มเดือน; เดือนล่าสุดเทียบถึงวันที่เดียวกันของทุกปี",
       ageAsOf: displayDate,
       ageMembers: members,
-      liveSections: ["totals", "months", "priorMonths", "historicalYears", "cumulativeYears", "daily", "priorDaily", "channels", "channelTypes", "ages"]
+      occupationAsOf: displayDate,
+      occupationMoneyAsOf: displayDate,
+      areaAsOf: displayDate,
+      areaMoneyAsOf: displayDate,
+      liveSections: ["totals", "months", "priorMonths", "historicalYears", "cumulativeYears", "daily", "priorDaily", "channels", "channelTypes", "ages", "occupations", "regions", "provinces"]
     },
     totals: { members, money, avg, median, min, max },
     priorYear: { year: PRIOR_YEAR_BE, asOf: priorAsOf, members: priorMembers },
@@ -643,7 +702,10 @@ try {
     priorDaily,
     channels,
     channelTypes,
-    ages
+    ages,
+    occupations,
+    regions,
+    provinces
   };
 
   const payload = `/* Generated from aggregate-only Tableau VDS queries. Do not edit manually. */\nwindow.NSF_TABLEAU_LIVE = ${JSON.stringify(live, null, 2)};\n`;
