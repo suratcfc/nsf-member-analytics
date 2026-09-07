@@ -11,6 +11,8 @@ window.NSF_TABLEAU_LIVE = {
     "autoRefresh": "tableau-10m",
     "comparisonAsOf": "3 ก.ย. 2568",
     "comparisonBasis": "เดือนที่จบแล้วเทียบเต็มเดือน; เดือนล่าสุดเทียบถึงวันที่เดียวกันของทุกปี",
+    "ageAsOf": "3 ก.ย. 2569",
+    "ageMembers": 63996,
     "liveSections": [
       "totals",
       "months",
@@ -20,7 +22,8 @@ window.NSF_TABLEAU_LIVE = {
       "daily",
       "priorDaily",
       "channels",
-      "channelTypes"
+      "channelTypes",
+      "ages"
     ]
   },
   "totals": {
@@ -3008,6 +3011,43 @@ window.NSF_TABLEAU_LIVE = {
       "label": "ตู้เติมเงิน",
       "members": 3,
       "money": 280
+    }
+  ],
+  "ages": [
+    {
+      "label": "15–19 ปี",
+      "members": 13101,
+      "money": 1845283.55
+    },
+    {
+      "label": "20–24 ปี",
+      "members": 18456,
+      "money": 1750683.84
+    },
+    {
+      "label": "25–29 ปี",
+      "members": 5207,
+      "money": 1257787.65
+    },
+    {
+      "label": "30–39 ปี",
+      "members": 10288,
+      "money": 4318540.35
+    },
+    {
+      "label": "40–49 ปี",
+      "members": 9088,
+      "money": 5201144
+    },
+    {
+      "label": "50–59 ปี",
+      "members": 7636,
+      "money": 8211158.08
+    },
+    {
+      "label": "60 ปีขึ้นไป",
+      "members": 220,
+      "money": 337279
     }
   ]
 };
