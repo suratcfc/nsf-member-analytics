@@ -44,6 +44,16 @@ const CHANNEL_TYPE_LABELS = new Map([
   ["5", "โมบายแบงก์กิ้ง"],
   ["6", "ตัวแทน / เจ้าหน้าที่"]
 ]);
+const AGE_GROUPS = [
+  { label: "15–19 ปี", min: 15, max: 19 },
+  { label: "20–24 ปี", min: 20, max: 24 },
+  { label: "25–29 ปี", min: 25, max: 29 },
+  { label: "30–39 ปี", min: 30, max: 39 },
+  { label: "40–49 ปี", min: 40, max: 49 },
+  { label: "50–59 ปี", min: 50, max: 59 },
+  { label: "60 ปีขึ้นไป", min: 60, max: null },
+  { label: "ไม่ระบุอายุ", unknown: true }
+];
 
 const serverUrl = (process.env.TABLEAU_SERVER_URL || DEFAULTS.serverUrl).replace(/\/$/, "");
 const siteContentUrl = process.env.TABLEAU_SITE_CONTENT_URL || DEFAULTS.siteContentUrl;
@@ -307,6 +317,40 @@ function channelTypeRows(rows) {
     .sort((a, b) => b.members - a.members || b.money - a.money);
 }
 
+function ageCondition(group) {
+  if (group.unknown) {
+    return `ISNULL([วดป_วันเกิด]) OR YEAR([วดป_วันเกิด]) > ${YEAR_AD} OR ${YEAR_AD} - YEAR([วดป_วันเกิด]) < 15`;
+  }
+  const upper = group.max === null ? "" : ` AND ${YEAR_AD} - YEAR([วดป_วันเกิด]) <= ${group.max}`;
+  return `NOT ISNULL([วดป_วันเกิด]) AND ${YEAR_AD} - YEAR([วดป_วันเกิด]) >= ${group.min}${upper}`;
+}
+
+function ageFields() {
+  return AGE_GROUPS.flatMap((group, index) => {
+    const condition = ageCondition(group);
+    return [
+      calculation(`ageMembers${index}`, `COUNTD(IF ${condition} THEN [INVESTOR_CODE] END)`),
+      calculation(`ageMoney${index}`, `SUM(IF ${condition} THEN [PRINCIPLE] ELSE 0 END)`)
+    ];
+  });
+}
+
+function ageRows(row, totalMembers, totalMoney) {
+  const rows = AGE_GROUPS.map((group, index) => ({
+    label: group.label,
+    members: Math.round(numberField(row, `ageMembers${index}`, "Age aggregate query")),
+    money: roundMoney(numberField(row, `ageMoney${index}`, "Age aggregate query"))
+  }));
+  for (const item of rows) {
+    if (!Number.isInteger(item.members) || item.members < 0 || !Number.isFinite(item.money) || item.money < 0) {
+      throw new Error("Age aggregate query returned an invalid value");
+    }
+  }
+  assertClose(sum(rows, "members"), totalMembers, 0, "Age member counts");
+  assertClose(roundMoney(sum(rows, "money")), totalMoney, 1, "Age money");
+  return rows.filter((item) => item.members > 0 || item.money > 0);
+}
+
 
 function validateHistoryMonths(rows, asOf, year, totalMembers, totalMoney) {
   const label = `Historical monthly query ${year + 543}`;
@@ -431,7 +475,7 @@ try {
   const asOf = normalizeDate(rawAsOf, "New-member summary query");
   const priorAsOf = `${PRIOR_YEAR_AD}${asOf.slice(4)}`;
 
-  const [monthResult, dailyResult, channelResult, channelTypeResult, priorSummaryRows, priorMonthResult, priorDailyResult] = await Promise.all([
+  const [monthResult, dailyResult, channelResult, channelTypeResult, ageResult, priorSummaryRows, priorMonthResult, priorDailyResult] = await Promise.all([
     queryDatasource(token, "Monthly aggregate query", [
       { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
@@ -451,6 +495,7 @@ try {
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
       { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
     ], ["1", "3"]),
+    queryDatasource(token, "Age aggregate query", ageFields(), ["1", "3"]),
     queryDatasource(token, "Prior-year summary query", [
       calculation("members", "COUNTD([INVESTOR_CODE])"),
       calculation("money", "SUM([PRINCIPLE])")
@@ -498,7 +543,8 @@ try {
   const daily = dailyRows(dailyResult, asOf);
   const channels = channelRows(channelResult);
   const channelTypes = channelTypeRows(channelTypeResult);
-  if (!months.length || !priorMonths.length || !daily.length || !priorDaily.length || !channels.length || !channelTypes.length) {
+  const ages = ageRows(expectSingleRow(ageResult, "Age aggregate query"), members, money);
+  if (!months.length || !priorMonths.length || !daily.length || !priorDaily.length || !channels.length || !channelTypes.length || !ages.length) {
     throw new Error("One or more approved aggregate breakdowns returned no rows");
   }
   if (!Number.isInteger(priorMembers) || priorMembers < 1 || priorMembers > 1_000_000) {
@@ -582,7 +628,9 @@ try {
       autoRefresh: "tableau-10m",
       comparisonAsOf: thaiDate(priorAsOf),
       comparisonBasis: "เดือนที่จบแล้วเทียบเต็มเดือน; เดือนล่าสุดเทียบถึงวันที่เดียวกันของทุกปี",
-      liveSections: ["totals", "months", "priorMonths", "historicalYears", "cumulativeYears", "daily", "priorDaily", "channels", "channelTypes"]
+      ageAsOf: displayDate,
+      ageMembers: members,
+      liveSections: ["totals", "months", "priorMonths", "historicalYears", "cumulativeYears", "daily", "priorDaily", "channels", "channelTypes", "ages"]
     },
     totals: { members, money, avg, median, min, max },
     priorYear: { year: PRIOR_YEAR_BE, asOf: priorAsOf, members: priorMembers },
@@ -594,7 +642,8 @@ try {
     daily,
     priorDaily,
     channels,
-    channelTypes
+    channelTypes,
+    ages
   };
 
   const payload = `/* Generated from aggregate-only Tableau VDS queries. Do not edit manually. */\nwindow.NSF_TABLEAU_LIVE = ${JSON.stringify(live, null, 2)};\n`;

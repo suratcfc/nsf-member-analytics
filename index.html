@@ -657,7 +657,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     D.totals = Object.assign({}, D.totals, LIVE.totals || {});
     D.memberDrive = Object.assign({}, D.memberDrive, LIVE.memberDrive || {});
     D.priorYear = Object.assign({}, D.priorYear, LIVE.priorYear || {});
-    ['months','priorMonths','historicalYears','cumulativeYears','daily','priorDaily','channels','channelTypes'].forEach(function(key){
+    ['months','priorMonths','historicalYears','cumulativeYears','daily','priorDaily','channels','channelTypes','ages'].forEach(function(key){
       if(Array.isArray(LIVE[key])) D[key] = LIVE[key];
     });
   }
@@ -692,13 +692,14 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   function asOfSummary(){
     return 'ยอดรวม รายเดือน และช่องทาง ณ ' + summaryAsOf +
       ' · อาชีพและพื้นที่ ณ ' + memberBreakdownAsOf + ' (ตัวเลขเงิน ณ ' + detailAsOf + ')' +
-      ' · อายุ เพศ สถานะ และแคมเปญ ณ ' + detailAsOf;
+      ' · อายุ ณ ' + ageAsOf + ' · เพศ สถานะ และแคมเปญ ณ ' + detailAsOf;
   }
 
   // ---------- header numbers ----------
   var summaryAsOf = D.meta.summaryAsOf || D.meta.dataAsOf;
   var memberBreakdownAsOf = D.meta.memberBreakdownAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
   var detailAsOf = D.meta.detailAsOf || D.meta.dataAsOf;
+  var ageAsOf = D.meta.ageAsOf || detailAsOf;
   document.getElementById('periodLine').textContent =
     D.meta.periodLabel + ' · ยอดสมาชิกล่าสุดจาก ' + (D.meta.latestSource || D.meta.source);
   document.getElementById('asof').textContent = asOfSummary();
@@ -1304,7 +1305,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       emptyMessage:'ข้อมูลช่วงอายุยังไม่พร้อมแสดงเป็นพายกราฟ',
       headingMembers:'สัดส่วนสมาชิกใหม่ตามช่วงอายุ',
       headingMoney:'สัดส่วนเงินนำส่งงวดแรกตามช่วงอายุ',
-      sub:'แสดงครบทั้ง 7 ช่วงอายุ เรียงตามลำดับอายุ',
+      sub:'แสดงครบทั้ง '+rows.length+' ช่วงอายุ เรียงตามลำดับอายุ',
       subAvg:'ขนาดชิ้นพาย = สัดส่วนสมาชิก · ตัวเลขด้านขวา = เงินเฉลี่ยต่อคน',
       totalCaption:'รวมทุกช่วงอายุ',
       totalCaptionAvg:'เงินงวดแรกเฉลี่ยทุกช่วงอายุ',
@@ -1313,9 +1314,9 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       legendLabel:'ช่วงอายุและสัดส่วน',
       shareOfMembers:'สมาชิกทุกช่วงอายุ',
       shareOfMoney:'เงินงวดแรกทุกช่วงอายุ',
-      asOf:detailAsOf,
+      asOf:ageAsOf,
       footnote:function(foot,avgMode){
-        foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+detailAsOf+' · แสดงครบทั้ง 7 ช่วงอายุ โดยชิ้นที่เล็กกว่า 0.5% คงสัดส่วนจริงไว้และทำเครื่องหมายเป็นจุดกลมที่ขอบวง'+
+        foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+ageAsOf+' · คำนวณจากปีเกิดเทียบปี 2569 และกระทบยอดกับสมาชิกใหม่สะสมแล้ว · แสดงครบทั้ง '+rows.length+' ช่วงอายุ โดยชิ้นที่เล็กกว่า 0.5% คงสัดส่วนจริงไว้และทำเครื่องหมายเป็นจุดกลมที่ขอบวง'+
           (avgMode?' · ค่าเฉลี่ยคำนวณจากเงินรวม ÷ จำนวนสมาชิก ไม่ได้นำค่าเฉลี่ยมารวมเป็นสัดส่วน':'')+' · ';
         var tableLink=el('a');tableLink.href='#ageTable';tableLink.textContent='ดูตัวเลขครบทุกช่วงอายุในตารางด้านล่าง';foot.appendChild(tableLink);
       }
@@ -1431,7 +1432,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     var u = document.getElementById('caveats');
     if(D.meta.summaryAsOf){
       u.appendChild(el('li','',
-        'ยอดรวม รายเดือน ช่องทาง และเงินอัปเดตอัตโนมัติจาก Tableau ถึง ' + summaryAsOf +
+        'ยอดรวม รายเดือน ช่องทาง ช่วงอายุ และเงินอัปเดตอัตโนมัติจาก Tableau ถึง ' + summaryAsOf +
         '; ข้อสังเกตและมิติอื่นยังอ้างอิง snapshot ตามวันที่ที่ระบุ ไม่ได้คำนวณใหม่โดยการคาดเดา'));
     }
     D.caveats.forEach(function(t){ u.appendChild(el('li','',t)); });
@@ -1463,12 +1464,13 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   }
   function renderAsOfLabels(){
     var single = 'ข้อมูล ณ ' + detailAsOf;
+    var ageSingle = 'ข้อมูล ณ ' + ageAsOf;
     var split = 'จำนวนคน ณ ' + memberBreakdownAsOf + ' · เงิน ณ ' + detailAsOf;
-    [['cpTag',single],['ageTag',single],['gsTag',single],['ocTag',split],['rgTag',split]].forEach(function(p){
+    [['cpTag',single],['ageTag',ageSingle],['gsTag',single],['ocTag',split],['rgTag',split]].forEach(function(p){
       var node = document.getElementById(p[0]); if(node) node.textContent = p[1];
     });
     asOfNote('cpAsOf', D.campaigns, {membersAsOf: detailAsOf});
-    asOfNote('ageAsOf', D.ages, {membersAsOf: detailAsOf});
+    asOfNote('ageAsOf', D.ages, {membersAsOf: ageAsOf});
     asOfNote('gsAsOf', D.genders, {membersAsOf: detailAsOf});
     // Occupations only show an average when the metric toggle asks for one.
     asOfNote('ocAsOf', D.occupations, {membersAsOf: memberBreakdownAsOf, moneyAsOf: detailAsOf, avgNote: metric === 'avg'});

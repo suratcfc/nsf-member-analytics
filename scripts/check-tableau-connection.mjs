@@ -13,7 +13,8 @@ const SAFE_REQUIRED_FIELDS = [
   "TR_DATE",
   "TYPE",
   "TR_CHANNEL_NAME",
-  "TR_CHANNEL_TYPE"
+  "TR_CHANNEL_TYPE",
+  "วดป_วันเกิด"
 ];
 
 const serverUrl = (process.env.TABLEAU_SERVER_URL || DEFAULTS.serverUrl).replace(/\/$/, "");
