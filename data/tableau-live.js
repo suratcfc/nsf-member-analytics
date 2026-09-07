@@ -1,15 +1,15 @@
 /* Generated from aggregate-only Tableau VDS queries. Do not edit manually. */
 window.NSF_TABLEAU_LIVE = {
   "meta": {
-    "periodEnd": "2026-09-01",
-    "periodLabel": "1 ม.ค. – 1 ก.ย. 2569",
-    "dataAsOf": "1 ก.ย. 2569",
-    "summaryAsOf": "1 ก.ย. 2569",
-    "summaryMembers": 63449,
+    "periodEnd": "2026-09-03",
+    "periodLabel": "1 ม.ค. – 3 ก.ย. 2569",
+    "dataAsOf": "3 ก.ย. 2569",
+    "summaryAsOf": "3 ก.ย. 2569",
+    "summaryMembers": 63996,
     "summarySource": "Tableau · VIEW_BI_DS (VizQL Data Service)",
     "latestSource": "Tableau · VIEW_BI_DS",
     "autoRefresh": "tableau-10m",
-    "comparisonAsOf": "1 ก.ย. 2568",
+    "comparisonAsOf": "3 ก.ย. 2568",
     "comparisonBasis": "เดือนที่จบแล้วเทียบเต็มเดือน; เดือนล่าสุดเทียบถึงวันที่เดียวกันของทุกปี",
     "liveSections": [
       "totals",
@@ -24,24 +24,24 @@ window.NSF_TABLEAU_LIVE = {
     ]
   },
   "totals": {
-    "members": 63449,
-    "money": 22547735.47,
-    "avg": 355.37,
+    "members": 63996,
+    "money": 22921876.47,
+    "avg": 358.18,
     "median": 50,
     "min": 50,
     "max": 30000
   },
   "priorYear": {
     "year": 2568,
-    "asOf": "2025-09-01",
-    "members": 92860
+    "asOf": "2025-09-03",
+    "members": 93670
   },
   "memberDrive": {
-    "asOf": "2026-09-01",
+    "asOf": "2026-09-03",
     "pending": {
-      "members": 7769,
+      "members": 8316,
       "from": "2026-08-10",
-      "to": "2026-09-01",
+      "to": "2026-09-03",
       "label": "รอจัดสรรเข้าแคมเปญ"
     }
   },
@@ -51,72 +51,72 @@ window.NSF_TABLEAU_LIVE = {
       "label": "ม.ค.",
       "members": 6387,
       "money": 2121349.76,
-      "memberAsOf": "1 ก.ย. 2569",
-      "moneyAsOf": "1 ก.ย. 2569"
+      "memberAsOf": "3 ก.ย. 2569",
+      "moneyAsOf": "3 ก.ย. 2569"
     },
     {
       "key": "2026-02",
       "label": "ก.พ.",
       "members": 5230,
       "money": 2053210,
-      "memberAsOf": "1 ก.ย. 2569",
-      "moneyAsOf": "1 ก.ย. 2569"
+      "memberAsOf": "3 ก.ย. 2569",
+      "moneyAsOf": "3 ก.ย. 2569"
     },
     {
       "key": "2026-03",
       "label": "มี.ค.",
       "members": 8061,
       "money": 2438870.35,
-      "memberAsOf": "1 ก.ย. 2569",
-      "moneyAsOf": "1 ก.ย. 2569"
+      "memberAsOf": "3 ก.ย. 2569",
+      "moneyAsOf": "3 ก.ย. 2569"
     },
     {
       "key": "2026-04",
       "label": "เม.ย.",
       "members": 7509,
       "money": 3062988.33,
-      "memberAsOf": "1 ก.ย. 2569",
-      "moneyAsOf": "1 ก.ย. 2569"
+      "memberAsOf": "3 ก.ย. 2569",
+      "moneyAsOf": "3 ก.ย. 2569"
     },
     {
       "key": "2026-05",
       "label": "พ.ค.",
       "members": 9731,
       "money": 3864062,
-      "memberAsOf": "1 ก.ย. 2569",
-      "moneyAsOf": "1 ก.ย. 2569"
+      "memberAsOf": "3 ก.ย. 2569",
+      "moneyAsOf": "3 ก.ย. 2569"
     },
     {
       "key": "2026-06",
       "label": "มิ.ย.",
       "members": 9306,
       "money": 2409486.98,
-      "memberAsOf": "1 ก.ย. 2569",
-      "moneyAsOf": "1 ก.ย. 2569"
+      "memberAsOf": "3 ก.ย. 2569",
+      "moneyAsOf": "3 ก.ย. 2569"
     },
     {
       "key": "2026-07",
       "label": "ก.ค.",
       "members": 7886,
       "money": 2622345.55,
-      "memberAsOf": "1 ก.ย. 2569",
-      "moneyAsOf": "1 ก.ย. 2569"
+      "memberAsOf": "3 ก.ย. 2569",
+      "moneyAsOf": "3 ก.ย. 2569"
     },
     {
       "key": "2026-08",
       "label": "ส.ค.",
       "members": 8535,
       "money": 3851584.5,
-      "memberAsOf": "1 ก.ย. 2569",
-      "moneyAsOf": "1 ก.ย. 2569"
+      "memberAsOf": "3 ก.ย. 2569",
+      "moneyAsOf": "3 ก.ย. 2569"
     },
     {
       "key": "2026-09",
       "label": "ก.ย.",
-      "members": 804,
-      "money": 123838,
-      "memberAsOf": "1 ก.ย. 2569",
-      "moneyAsOf": "1 ก.ย. 2569",
+      "members": 1351,
+      "money": 497979,
+      "memberAsOf": "3 ก.ย. 2569",
+      "moneyAsOf": "3 ก.ย. 2569",
       "partial": true
     }
   ],
@@ -126,477 +126,477 @@ window.NSF_TABLEAU_LIVE = {
       "label": "ม.ค.",
       "members": 10521,
       "money": 4090190.45,
-      "memberAsOf": "1 ก.ย. 2568",
-      "moneyAsOf": "1 ก.ย. 2568"
+      "memberAsOf": "3 ก.ย. 2568",
+      "moneyAsOf": "3 ก.ย. 2568"
     },
     {
       "key": "2025-02",
       "label": "ก.พ.",
       "members": 9635,
       "money": 3897809,
-      "memberAsOf": "1 ก.ย. 2568",
-      "moneyAsOf": "1 ก.ย. 2568"
+      "memberAsOf": "3 ก.ย. 2568",
+      "moneyAsOf": "3 ก.ย. 2568"
     },
     {
       "key": "2025-03",
       "label": "มี.ค.",
       "members": 12173,
       "money": 4138805,
-      "memberAsOf": "1 ก.ย. 2568",
-      "moneyAsOf": "1 ก.ย. 2568"
+      "memberAsOf": "3 ก.ย. 2568",
+      "moneyAsOf": "3 ก.ย. 2568"
     },
     {
       "key": "2025-04",
       "label": "เม.ย.",
       "members": 10200,
       "money": 3454556,
-      "memberAsOf": "1 ก.ย. 2568",
-      "moneyAsOf": "1 ก.ย. 2568"
+      "memberAsOf": "3 ก.ย. 2568",
+      "moneyAsOf": "3 ก.ย. 2568"
     },
     {
       "key": "2025-05",
       "label": "พ.ค.",
       "members": 11596,
       "money": 3254890,
-      "memberAsOf": "1 ก.ย. 2568",
-      "moneyAsOf": "1 ก.ย. 2568"
+      "memberAsOf": "3 ก.ย. 2568",
+      "moneyAsOf": "3 ก.ย. 2568"
     },
     {
       "key": "2025-06",
       "label": "มิ.ย.",
       "members": 12067,
       "money": 2560317.84,
-      "memberAsOf": "1 ก.ย. 2568",
-      "moneyAsOf": "1 ก.ย. 2568"
+      "memberAsOf": "3 ก.ย. 2568",
+      "moneyAsOf": "3 ก.ย. 2568"
     },
     {
       "key": "2025-07",
       "label": "ก.ค.",
       "members": 10386,
       "money": 2743511.26,
-      "memberAsOf": "1 ก.ย. 2568",
-      "moneyAsOf": "1 ก.ย. 2568"
+      "memberAsOf": "3 ก.ย. 2568",
+      "moneyAsOf": "3 ก.ย. 2568"
     },
     {
       "key": "2025-08",
       "label": "ส.ค.",
       "members": 15880,
       "money": 3676122,
-      "memberAsOf": "1 ก.ย. 2568",
-      "moneyAsOf": "1 ก.ย. 2568"
+      "memberAsOf": "3 ก.ย. 2568",
+      "moneyAsOf": "3 ก.ย. 2568"
     },
     {
       "key": "2025-09",
       "label": "ก.ย.",
-      "members": 402,
-      "money": 84910,
-      "memberAsOf": "1 ก.ย. 2568",
-      "moneyAsOf": "1 ก.ย. 2568",
+      "members": 1212,
+      "money": 337274,
+      "memberAsOf": "3 ก.ย. 2568",
+      "moneyAsOf": "3 ก.ย. 2568",
       "partial": true
     }
   ],
   "historicalYears": [
     {
       "year": 2568,
-      "asOf": "2025-09-01",
-      "members": 92860,
-      "money": 27901111.55,
+      "asOf": "2025-09-03",
+      "members": 93670,
+      "money": 28153475.55,
       "months": [
         {
           "key": "2025-01",
           "label": "ม.ค.",
           "members": 10521,
           "money": 4090190.45,
-          "memberAsOf": "1 ก.ย. 2568",
-          "moneyAsOf": "1 ก.ย. 2568"
+          "memberAsOf": "3 ก.ย. 2568",
+          "moneyAsOf": "3 ก.ย. 2568"
         },
         {
           "key": "2025-02",
           "label": "ก.พ.",
           "members": 9635,
           "money": 3897809,
-          "memberAsOf": "1 ก.ย. 2568",
-          "moneyAsOf": "1 ก.ย. 2568"
+          "memberAsOf": "3 ก.ย. 2568",
+          "moneyAsOf": "3 ก.ย. 2568"
         },
         {
           "key": "2025-03",
           "label": "มี.ค.",
           "members": 12173,
           "money": 4138805,
-          "memberAsOf": "1 ก.ย. 2568",
-          "moneyAsOf": "1 ก.ย. 2568"
+          "memberAsOf": "3 ก.ย. 2568",
+          "moneyAsOf": "3 ก.ย. 2568"
         },
         {
           "key": "2025-04",
           "label": "เม.ย.",
           "members": 10200,
           "money": 3454556,
-          "memberAsOf": "1 ก.ย. 2568",
-          "moneyAsOf": "1 ก.ย. 2568"
+          "memberAsOf": "3 ก.ย. 2568",
+          "moneyAsOf": "3 ก.ย. 2568"
         },
         {
           "key": "2025-05",
           "label": "พ.ค.",
           "members": 11596,
           "money": 3254890,
-          "memberAsOf": "1 ก.ย. 2568",
-          "moneyAsOf": "1 ก.ย. 2568"
+          "memberAsOf": "3 ก.ย. 2568",
+          "moneyAsOf": "3 ก.ย. 2568"
         },
         {
           "key": "2025-06",
           "label": "มิ.ย.",
           "members": 12067,
           "money": 2560317.84,
-          "memberAsOf": "1 ก.ย. 2568",
-          "moneyAsOf": "1 ก.ย. 2568"
+          "memberAsOf": "3 ก.ย. 2568",
+          "moneyAsOf": "3 ก.ย. 2568"
         },
         {
           "key": "2025-07",
           "label": "ก.ค.",
           "members": 10386,
           "money": 2743511.26,
-          "memberAsOf": "1 ก.ย. 2568",
-          "moneyAsOf": "1 ก.ย. 2568"
+          "memberAsOf": "3 ก.ย. 2568",
+          "moneyAsOf": "3 ก.ย. 2568"
         },
         {
           "key": "2025-08",
           "label": "ส.ค.",
           "members": 15880,
           "money": 3676122,
-          "memberAsOf": "1 ก.ย. 2568",
-          "moneyAsOf": "1 ก.ย. 2568"
+          "memberAsOf": "3 ก.ย. 2568",
+          "moneyAsOf": "3 ก.ย. 2568"
         },
         {
           "key": "2025-09",
           "label": "ก.ย.",
-          "members": 402,
-          "money": 84910,
-          "memberAsOf": "1 ก.ย. 2568",
-          "moneyAsOf": "1 ก.ย. 2568",
+          "members": 1212,
+          "money": 337274,
+          "memberAsOf": "3 ก.ย. 2568",
+          "moneyAsOf": "3 ก.ย. 2568",
           "partial": true
         }
       ]
     },
     {
       "year": 2567,
-      "asOf": "2024-09-01",
-      "members": 76338,
-      "money": 32382936.64,
+      "asOf": "2024-09-03",
+      "members": 77798,
+      "money": 32825448.64,
       "months": [
         {
           "key": "2024-01",
           "label": "ม.ค.",
           "members": 6982,
           "money": 3546502.17,
-          "memberAsOf": "1 ก.ย. 2567",
-          "moneyAsOf": "1 ก.ย. 2567"
+          "memberAsOf": "3 ก.ย. 2567",
+          "moneyAsOf": "3 ก.ย. 2567"
         },
         {
           "key": "2024-02",
           "label": "ก.พ.",
           "members": 6693,
           "money": 3896396.26,
-          "memberAsOf": "1 ก.ย. 2567",
-          "moneyAsOf": "1 ก.ย. 2567"
+          "memberAsOf": "3 ก.ย. 2567",
+          "moneyAsOf": "3 ก.ย. 2567"
         },
         {
           "key": "2024-03",
           "label": "มี.ค.",
           "members": 5126,
           "money": 2894323,
-          "memberAsOf": "1 ก.ย. 2567",
-          "moneyAsOf": "1 ก.ย. 2567"
+          "memberAsOf": "3 ก.ย. 2567",
+          "moneyAsOf": "3 ก.ย. 2567"
         },
         {
           "key": "2024-04",
           "label": "เม.ย.",
           "members": 5722,
           "money": 2384770.34,
-          "memberAsOf": "1 ก.ย. 2567",
-          "moneyAsOf": "1 ก.ย. 2567"
+          "memberAsOf": "3 ก.ย. 2567",
+          "moneyAsOf": "3 ก.ย. 2567"
         },
         {
           "key": "2024-05",
           "label": "พ.ค.",
           "members": 13295,
           "money": 4165616.21,
-          "memberAsOf": "1 ก.ย. 2567",
-          "moneyAsOf": "1 ก.ย. 2567"
+          "memberAsOf": "3 ก.ย. 2567",
+          "moneyAsOf": "3 ก.ย. 2567"
         },
         {
           "key": "2024-06",
           "label": "มิ.ย.",
           "members": 12050,
           "money": 5064512,
-          "memberAsOf": "1 ก.ย. 2567",
-          "moneyAsOf": "1 ก.ย. 2567"
+          "memberAsOf": "3 ก.ย. 2567",
+          "moneyAsOf": "3 ก.ย. 2567"
         },
         {
           "key": "2024-07",
           "label": "ก.ค.",
           "members": 11521,
           "money": 6075669.93,
-          "memberAsOf": "1 ก.ย. 2567",
-          "moneyAsOf": "1 ก.ย. 2567"
+          "memberAsOf": "3 ก.ย. 2567",
+          "moneyAsOf": "3 ก.ย. 2567"
         },
         {
           "key": "2024-08",
           "label": "ส.ค.",
           "members": 14436,
           "money": 4254975.73,
-          "memberAsOf": "1 ก.ย. 2567",
-          "moneyAsOf": "1 ก.ย. 2567"
+          "memberAsOf": "3 ก.ย. 2567",
+          "moneyAsOf": "3 ก.ย. 2567"
         },
         {
           "key": "2024-09",
           "label": "ก.ย.",
-          "members": 513,
-          "money": 100171,
-          "memberAsOf": "1 ก.ย. 2567",
-          "moneyAsOf": "1 ก.ย. 2567",
+          "members": 1973,
+          "money": 542683,
+          "memberAsOf": "3 ก.ย. 2567",
+          "moneyAsOf": "3 ก.ย. 2567",
           "partial": true
         }
       ]
     },
     {
       "year": 2566,
-      "asOf": "2023-09-01",
-      "members": 24698,
-      "money": 21852716.64,
+      "asOf": "2023-09-03",
+      "members": 24788,
+      "money": 21946776.64,
       "months": [
         {
           "key": "2023-01",
           "label": "ม.ค.",
           "members": 2028,
           "money": 2455371.16,
-          "memberAsOf": "1 ก.ย. 2566",
-          "moneyAsOf": "1 ก.ย. 2566"
+          "memberAsOf": "3 ก.ย. 2566",
+          "moneyAsOf": "3 ก.ย. 2566"
         },
         {
           "key": "2023-02",
           "label": "ก.พ.",
           "members": 1925,
           "money": 2623186,
-          "memberAsOf": "1 ก.ย. 2566",
-          "moneyAsOf": "1 ก.ย. 2566"
+          "memberAsOf": "3 ก.ย. 2566",
+          "moneyAsOf": "3 ก.ย. 2566"
         },
         {
           "key": "2023-03",
           "label": "มี.ค.",
           "members": 2682,
           "money": 3622122,
-          "memberAsOf": "1 ก.ย. 2566",
-          "moneyAsOf": "1 ก.ย. 2566"
+          "memberAsOf": "3 ก.ย. 2566",
+          "moneyAsOf": "3 ก.ย. 2566"
         },
         {
           "key": "2023-04",
           "label": "เม.ย.",
           "members": 2479,
           "money": 3144213.95,
-          "memberAsOf": "1 ก.ย. 2566",
-          "moneyAsOf": "1 ก.ย. 2566"
+          "memberAsOf": "3 ก.ย. 2566",
+          "moneyAsOf": "3 ก.ย. 2566"
         },
         {
           "key": "2023-05",
           "label": "พ.ค.",
           "members": 3398,
           "money": 2611724,
-          "memberAsOf": "1 ก.ย. 2566",
-          "moneyAsOf": "1 ก.ย. 2566"
+          "memberAsOf": "3 ก.ย. 2566",
+          "moneyAsOf": "3 ก.ย. 2566"
         },
         {
           "key": "2023-06",
           "label": "มิ.ย.",
           "members": 3026,
           "money": 2554332.19,
-          "memberAsOf": "1 ก.ย. 2566",
-          "moneyAsOf": "1 ก.ย. 2566"
+          "memberAsOf": "3 ก.ย. 2566",
+          "moneyAsOf": "3 ก.ย. 2566"
         },
         {
           "key": "2023-07",
           "label": "ก.ค.",
           "members": 4377,
           "money": 2148574.34,
-          "memberAsOf": "1 ก.ย. 2566",
-          "moneyAsOf": "1 ก.ย. 2566"
+          "memberAsOf": "3 ก.ย. 2566",
+          "moneyAsOf": "3 ก.ย. 2566"
         },
         {
           "key": "2023-08",
           "label": "ส.ค.",
           "members": 4588,
           "money": 2567793,
-          "memberAsOf": "1 ก.ย. 2566",
-          "moneyAsOf": "1 ก.ย. 2566"
+          "memberAsOf": "3 ก.ย. 2566",
+          "moneyAsOf": "3 ก.ย. 2566"
         },
         {
           "key": "2023-09",
           "label": "ก.ย.",
-          "members": 195,
-          "money": 125400,
-          "memberAsOf": "1 ก.ย. 2566",
-          "moneyAsOf": "1 ก.ย. 2566",
+          "members": 285,
+          "money": 219460,
+          "memberAsOf": "3 ก.ย. 2566",
+          "moneyAsOf": "3 ก.ย. 2566",
           "partial": true
         }
       ]
     },
     {
       "year": 2565,
-      "asOf": "2022-09-01",
-      "members": 37926,
-      "money": 16905362.79,
+      "asOf": "2022-09-03",
+      "members": 38237,
+      "money": 17137392.79,
       "months": [
         {
           "key": "2022-01",
           "label": "ม.ค.",
           "members": 3975,
           "money": 2153661,
-          "memberAsOf": "1 ก.ย. 2565",
-          "moneyAsOf": "1 ก.ย. 2565"
+          "memberAsOf": "3 ก.ย. 2565",
+          "moneyAsOf": "3 ก.ย. 2565"
         },
         {
           "key": "2022-02",
           "label": "ก.พ.",
           "members": 4547,
           "money": 2085047.08,
-          "memberAsOf": "1 ก.ย. 2565",
-          "moneyAsOf": "1 ก.ย. 2565"
+          "memberAsOf": "3 ก.ย. 2565",
+          "moneyAsOf": "3 ก.ย. 2565"
         },
         {
           "key": "2022-03",
           "label": "มี.ค.",
           "members": 8336,
           "money": 2789758,
-          "memberAsOf": "1 ก.ย. 2565",
-          "moneyAsOf": "1 ก.ย. 2565"
+          "memberAsOf": "3 ก.ย. 2565",
+          "moneyAsOf": "3 ก.ย. 2565"
         },
         {
           "key": "2022-04",
           "label": "เม.ย.",
           "members": 3635,
           "money": 1875004,
-          "memberAsOf": "1 ก.ย. 2565",
-          "moneyAsOf": "1 ก.ย. 2565"
+          "memberAsOf": "3 ก.ย. 2565",
+          "moneyAsOf": "3 ก.ย. 2565"
         },
         {
           "key": "2022-05",
           "label": "พ.ค.",
           "members": 3878,
           "money": 1800174.41,
-          "memberAsOf": "1 ก.ย. 2565",
-          "moneyAsOf": "1 ก.ย. 2565"
+          "memberAsOf": "3 ก.ย. 2565",
+          "moneyAsOf": "3 ก.ย. 2565"
         },
         {
           "key": "2022-06",
           "label": "มิ.ย.",
           "members": 3599,
           "money": 1428355.8,
-          "memberAsOf": "1 ก.ย. 2565",
-          "moneyAsOf": "1 ก.ย. 2565"
+          "memberAsOf": "3 ก.ย. 2565",
+          "moneyAsOf": "3 ก.ย. 2565"
         },
         {
           "key": "2022-07",
           "label": "ก.ค.",
           "members": 3783,
           "money": 2291454.5,
-          "memberAsOf": "1 ก.ย. 2565",
-          "moneyAsOf": "1 ก.ย. 2565"
+          "memberAsOf": "3 ก.ย. 2565",
+          "moneyAsOf": "3 ก.ย. 2565"
         },
         {
           "key": "2022-08",
           "label": "ส.ค.",
           "members": 5858,
           "money": 2382483,
-          "memberAsOf": "1 ก.ย. 2565",
-          "moneyAsOf": "1 ก.ย. 2565"
+          "memberAsOf": "3 ก.ย. 2565",
+          "moneyAsOf": "3 ก.ย. 2565"
         },
         {
           "key": "2022-09",
           "label": "ก.ย.",
-          "members": 315,
-          "money": 99425,
-          "memberAsOf": "1 ก.ย. 2565",
-          "moneyAsOf": "1 ก.ย. 2565",
+          "members": 626,
+          "money": 331455,
+          "memberAsOf": "3 ก.ย. 2565",
+          "moneyAsOf": "3 ก.ย. 2565",
           "partial": true
         }
       ]
     },
     {
       "year": 2564,
-      "asOf": "2021-09-01",
-      "members": 48126,
-      "money": 23587417.49,
+      "asOf": "2021-09-03",
+      "members": 48558,
+      "money": 23713867.49,
       "months": [
         {
           "key": "2021-01",
           "label": "ม.ค.",
           "members": 3892,
           "money": 3153537.02,
-          "memberAsOf": "1 ก.ย. 2564",
-          "moneyAsOf": "1 ก.ย. 2564"
+          "memberAsOf": "3 ก.ย. 2564",
+          "moneyAsOf": "3 ก.ย. 2564"
         },
         {
           "key": "2021-02",
           "label": "ก.พ.",
           "members": 3844,
           "money": 2191275.8,
-          "memberAsOf": "1 ก.ย. 2564",
-          "moneyAsOf": "1 ก.ย. 2564"
+          "memberAsOf": "3 ก.ย. 2564",
+          "moneyAsOf": "3 ก.ย. 2564"
         },
         {
           "key": "2021-03",
           "label": "มี.ค.",
           "members": 6261,
           "money": 4869125.1,
-          "memberAsOf": "1 ก.ย. 2564",
-          "moneyAsOf": "1 ก.ย. 2564"
+          "memberAsOf": "3 ก.ย. 2564",
+          "moneyAsOf": "3 ก.ย. 2564"
         },
         {
           "key": "2021-04",
           "label": "เม.ย.",
           "members": 4013,
           "money": 2905526,
-          "memberAsOf": "1 ก.ย. 2564",
-          "moneyAsOf": "1 ก.ย. 2564"
+          "memberAsOf": "3 ก.ย. 2564",
+          "moneyAsOf": "3 ก.ย. 2564"
         },
         {
           "key": "2021-05",
           "label": "พ.ค.",
           "members": 2014,
           "money": 2443224,
-          "memberAsOf": "1 ก.ย. 2564",
-          "moneyAsOf": "1 ก.ย. 2564"
+          "memberAsOf": "3 ก.ย. 2564",
+          "moneyAsOf": "3 ก.ย. 2564"
         },
         {
           "key": "2021-06",
           "label": "มิ.ย.",
           "members": 7819,
           "money": 2423299,
-          "memberAsOf": "1 ก.ย. 2564",
-          "moneyAsOf": "1 ก.ย. 2564"
+          "memberAsOf": "3 ก.ย. 2564",
+          "moneyAsOf": "3 ก.ย. 2564"
         },
         {
           "key": "2021-07",
           "label": "ก.ค.",
           "members": 12862,
           "money": 3313048.56,
-          "memberAsOf": "1 ก.ย. 2564",
-          "moneyAsOf": "1 ก.ย. 2564"
+          "memberAsOf": "3 ก.ย. 2564",
+          "moneyAsOf": "3 ก.ย. 2564"
         },
         {
           "key": "2021-08",
           "label": "ส.ค.",
           "members": 7099,
           "money": 2226042.01,
-          "memberAsOf": "1 ก.ย. 2564",
-          "moneyAsOf": "1 ก.ย. 2564"
+          "memberAsOf": "3 ก.ย. 2564",
+          "moneyAsOf": "3 ก.ย. 2564"
         },
         {
           "key": "2021-09",
           "label": "ก.ย.",
-          "members": 322,
-          "money": 62340,
-          "memberAsOf": "1 ก.ย. 2564",
-          "moneyAsOf": "1 ก.ย. 2564",
+          "members": 754,
+          "money": 188790,
+          "memberAsOf": "3 ก.ย. 2564",
+          "moneyAsOf": "3 ก.ย. 2564",
           "partial": true
         }
       ]
@@ -1859,7 +1859,15 @@ window.NSF_TABLEAU_LIVE = {
     },
     {
       "date": "2026-09-01",
-      "members": 804
+      "members": 824
+    },
+    {
+      "date": "2026-09-02",
+      "members": 342
+    },
+    {
+      "date": "2026-09-03",
+      "members": 185
     }
   ],
   "priorDaily": [
@@ -2838,68 +2846,76 @@ window.NSF_TABLEAU_LIVE = {
     {
       "date": "2025-09-01",
       "members": 402
+    },
+    {
+      "date": "2025-09-02",
+      "members": 411
+    },
+    {
+      "date": "2025-09-03",
+      "members": 399
     }
   ],
   "channels": [
     {
       "name": "ทรูมันนี่",
       "full": "บ. ทรู มันนี่ จำกัด",
-      "members": 26483,
-      "money": 4179215
+      "members": 26631,
+      "money": 4199328
     },
     {
       "name": "ธ.กรุงไทย",
       "full": "ธ. กรุงไทย จำกัด (มหาชน)",
-      "members": 16889,
-      "money": 6680076.21
+      "members": 17057,
+      "money": 6781245.21
     },
     {
       "name": "ธ.กสิกรไทย",
       "full": "ธ. กสิกรไทย จำกัด (มหาชน)",
-      "members": 10421,
-      "money": 3469084.76
+      "members": 10488,
+      "money": 3521139.76
     },
     {
       "name": "ธ.ออมสิน",
       "full": "ธ. ออมสิน",
-      "members": 2514,
-      "money": 2128631
+      "members": 2580,
+      "money": 2208185
     },
     {
       "name": "แอดวานซ์ เอ็มเปย์",
       "full": "บ. แอดวานซ์ เอ็มเปย์ จำกัด",
-      "members": 2126,
-      "money": 1134938
+      "members": 2136,
+      "money": 1137238
     },
     {
       "name": "กอช. (agent)",
       "full": "กองทุนการออมแห่งชาติ (agent)",
-      "members": 2017,
-      "money": 2145609
+      "members": 2054,
+      "money": 2195409
     },
     {
       "name": "ธ.ก.ส.",
       "full": "ธ. เพื่อการเกษตรและสหกรณ์การเกษตร",
-      "members": 1328,
-      "money": 1927866.5
+      "members": 1360,
+      "money": 1990266.5
     },
     {
       "name": "เสมียนตราอำเภอ/จังหวัด",
       "full": "เสมียนตราอำเภอ/จังหวัด",
-      "members": 886,
-      "money": 274760
+      "members": 887,
+      "money": 274810
     },
     {
       "name": "สนง.คลังจังหวัด",
       "full": "สำนักงานคลังจังหวัด",
-      "members": 528,
-      "money": 507465
+      "members": 536,
+      "money": 513165
     },
     {
       "name": "ช้อปปี้เพย์",
       "full": "บริษัท ช้อปปี้เพย์ (ประเทศไทย) จำกัด",
-      "members": 108,
-      "money": 16130
+      "members": 118,
+      "money": 17130
     },
     {
       "name": "เครือข่ายองค์กรการเงินชุมชน",
@@ -2960,26 +2976,26 @@ window.NSF_TABLEAU_LIVE = {
     {
       "code": "3",
       "label": "แอป / e-Wallet",
-      "members": 45559,
-      "money": 10936669.34
+      "members": 45870,
+      "money": 11033835.34
     },
     {
       "code": "5",
       "label": "โมบายแบงก์กิ้ง",
-      "members": 12009,
-      "money": 5147072.13
+      "members": 12116,
+      "money": 5229687.13
     },
     {
       "code": "1",
       "label": "เคาน์เตอร์ / สาขา",
-      "members": 2949,
-      "money": 4032545
+      "members": 3040,
+      "money": 4177055
     },
     {
       "code": "6",
       "label": "ตัวแทน / เจ้าหน้าที่",
-      "members": 2926,
-      "money": 2428469
+      "members": 2964,
+      "money": 2478319
     },
     {
       "code": "4",
