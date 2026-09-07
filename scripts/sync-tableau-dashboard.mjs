@@ -44,6 +44,14 @@ const CHANNEL_TYPE_LABELS = new Map([
   ["5", "โมบายแบงก์กิ้ง"],
   ["6", "ตัวแทน / เจ้าหน้าที่"]
 ]);
+const STATUS_LABELS = new Map([
+  ["A", "ปกติ"],
+  ["A3", "ปกติ (สถานะย่อย)"],
+  ["Q", "ลาออก"],
+  ["R1", "ลาออก"],
+  ["R3", "ลาออก"],
+  ["C", "ไม่ทราบ"]
+]);
 const AGE_GROUPS = [
   { label: "15–19 ปี", min: 15, max: 19 },
   { label: "20–24 ปี", min: 20, max: 24 },
@@ -341,6 +349,21 @@ function validateDimensionRows(rows, totalMembers, totalMoney, label) {
   return rows;
 }
 
+function statusRows(rows, totalMembers, totalMoney) {
+  return validateDimensionRows(
+    dimensionRows(rows, "Status aggregate query"),
+    totalMembers,
+    totalMoney,
+    "Status aggregate query"
+  ).map((row) => ({
+    code: row.name,
+    name: `${row.name} · ${STATUS_LABELS.get(row.name) || "ยังไม่ยืนยันความหมาย"}`,
+    label: STATUS_LABELS.get(row.name) || "ยังไม่ยืนยันความหมาย",
+    members: row.members,
+    money: row.money
+  }));
+}
+
 function topRowsWithOther(rows, limit, unit) {
   const top = rows.slice(0, limit);
   const rest = rows.slice(limit);
@@ -511,7 +534,7 @@ try {
   const asOf = normalizeDate(rawAsOf, "New-member summary query");
   const priorAsOf = `${PRIOR_YEAR_AD}${asOf.slice(4)}`;
 
-  const [monthResult, dailyResult, channelResult, channelTypeResult, ageResult, occupationResult, regionResult, provinceResult, priorSummaryRows, priorMonthResult, priorDailyResult] = await Promise.all([
+  const [monthResult, dailyResult, channelResult, channelTypeResult, ageResult, occupationResult, regionResult, provinceResult, genderResult, statusResult, priorSummaryRows, priorMonthResult, priorDailyResult] = await Promise.all([
     queryDatasource(token, "Monthly aggregate query", [
       { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
@@ -544,6 +567,16 @@ try {
     ], ["1", "3"]),
     queryDatasource(token, "Province aggregate query", [
       { fieldCaption: "จังหวัด", fieldAlias: "name" },
+      { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
+      { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
+    ], ["1", "3"]),
+    queryDatasource(token, "Gender aggregate query", [
+      { fieldCaption: "เพศ", fieldAlias: "name" },
+      { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
+      { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
+    ], ["1", "3"]),
+    queryDatasource(token, "Status aggregate query", [
+      { fieldCaption: "MEMBER_STATUS", fieldAlias: "name" },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
       { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
     ], ["1", "3"]),
@@ -599,7 +632,9 @@ try {
   const regions = validateDimensionRows(dimensionRows(regionResult, "Region aggregate query"), members, money, "Region aggregate query");
   const allProvinces = validateDimensionRows(dimensionRows(provinceResult, "Province aggregate query"), members, money, "Province aggregate query");
   const provinces = topRowsWithOther(allProvinces, 20, "จังหวัด");
-  if (!months.length || !priorMonths.length || !daily.length || !priorDaily.length || !channels.length || !channelTypes.length || !ages.length || !occupations.length || !regions.length || !provinces.length) {
+  const genders = validateDimensionRows(dimensionRows(genderResult, "Gender aggregate query"), members, money, "Gender aggregate query");
+  const statuses = statusRows(statusResult, members, money);
+  if (!months.length || !priorMonths.length || !daily.length || !priorDaily.length || !channels.length || !channelTypes.length || !ages.length || !occupations.length || !regions.length || !provinces.length || !genders.length || !statuses.length) {
     throw new Error("One or more approved aggregate breakdowns returned no rows");
   }
   if (!Number.isInteger(priorMembers) || priorMembers < 1 || priorMembers > 1_000_000) {
@@ -689,7 +724,8 @@ try {
       occupationMoneyAsOf: displayDate,
       areaAsOf: displayDate,
       areaMoneyAsOf: displayDate,
-      liveSections: ["totals", "months", "priorMonths", "historicalYears", "cumulativeYears", "daily", "priorDaily", "channels", "channelTypes", "ages", "occupations", "regions", "provinces"]
+      genderStatusAsOf: displayDate,
+      liveSections: ["totals", "months", "priorMonths", "historicalYears", "cumulativeYears", "daily", "priorDaily", "channels", "channelTypes", "ages", "occupations", "regions", "provinces", "genders", "statuses"]
     },
     totals: { members, money, avg, median, min, max },
     priorYear: { year: PRIOR_YEAR_BE, asOf: priorAsOf, members: priorMembers },
@@ -705,7 +741,9 @@ try {
     ages,
     occupations,
     regions,
-    provinces
+    provinces,
+    genders,
+    statuses
   };
 
   const payload = `/* Generated from aggregate-only Tableau VDS queries. Do not edit manually. */\nwindow.NSF_TABLEAU_LIVE = ${JSON.stringify(live, null, 2)};\n`;

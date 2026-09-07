@@ -409,6 +409,11 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 }
 @media(max-width:480px){.channel-pie-total{margin-left:0;text-align:left}.channel-pie-head{display:block}.channel-pie-total{margin-top:12px}.channel-pie-name{font-size:12.5px}.channel-pie-value{font-size:14px}}
 
+.gender-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.gender-status-grid .channel-pie-layout{grid-template-columns:1fr;gap:16px}
+.gender-status-grid .channel-pie-svg{max-width:340px}
+@media(max-width:980px){.gender-status-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -598,21 +603,9 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   <div class="wrap">
     <div class="sec-head"><h2>เพศ และสถานะสมาชิก</h2><span class="hint"><span class="asof-tag" id="gsTag"></span></span></div>
     <div class="sec-rule"></div>
-    <div class="split2">
-      <div class="card">
-        <div class="cap">เพศ</div>
-        <div class="num" id="gTop">—</div>
-        <div class="splitbar" id="gBar"></div>
-        <div class="legend" id="gLeg"></div>
-        <p class="desc">สมาชิกใหม่ปีนี้เป็นเพศหญิงมากกว่าชาย และถือเงินงวดแรกมากกว่าเช่นกัน</p>
-      </div>
-      <div class="card">
-        <div class="cap">สถานะสมาชิก</div>
-        <div class="num" id="sTop">—</div>
-        <div class="splitbar" id="sBar"></div>
-        <div class="legend" id="sLeg"></div>
-        <p class="desc" id="sDesc"></p>
-      </div>
+    <div class="gender-status-grid">
+      <div class="card channel-pie-card" id="genderPie"></div>
+      <div class="card channel-pie-card" id="statusPie"></div>
     </div>
     <div style="height:16px"></div>
     <div class="card tblwrap"><table id="stTable"></table></div>
@@ -657,7 +650,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     D.totals = Object.assign({}, D.totals, LIVE.totals || {});
     D.memberDrive = Object.assign({}, D.memberDrive, LIVE.memberDrive || {});
     D.priorYear = Object.assign({}, D.priorYear, LIVE.priorYear || {});
-    ['months','priorMonths','historicalYears','cumulativeYears','daily','priorDaily','channels','channelTypes','ages','occupations','regions','provinces'].forEach(function(key){
+    ['months','priorMonths','historicalYears','cumulativeYears','daily','priorDaily','channels','channelTypes','ages','occupations','regions','provinces','genders','statuses'].forEach(function(key){
       if(Array.isArray(LIVE[key])) D[key] = LIVE[key];
     });
   }
@@ -690,8 +683,10 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 
   // Every date shown comes from meta, so a card can never imply it shares the live total's date.
   function asOfSummary(){
-    return 'ยอดรวม รายเดือน ช่องทาง ช่วงอายุ อาชีพ และพื้นที่ ณ ' + summaryAsOf +
-      ' · เพศ สถานะ และแคมเปญ ณ ' + detailAsOf;
+    var liveSummary='ยอดรวม รายเดือน ช่องทาง ช่วงอายุ อาชีพ และพื้นที่ ณ '+summaryAsOf;
+    if(genderStatusAsOf===summaryAsOf) liveSummary='ยอดรวม รายเดือน ช่องทาง ช่วงอายุ อาชีพ พื้นที่ เพศ และสถานะ ณ '+summaryAsOf;
+    else liveSummary+=' · เพศและสถานะ ณ '+genderStatusAsOf;
+    return liveSummary+' · แคมเปญและข้อสังเกต ณ '+detailAsOf;
   }
 
   // ---------- header numbers ----------
@@ -703,6 +698,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   var occupationMoneyAsOf = D.meta.occupationMoneyAsOf || detailAsOf;
   var areaAsOf = D.meta.areaAsOf || memberBreakdownAsOf;
   var areaMoneyAsOf = D.meta.areaMoneyAsOf || detailAsOf;
+  var genderStatusAsOf = D.meta.genderStatusAsOf || detailAsOf;
   document.getElementById('periodLine').textContent =
     D.meta.periodLabel + ' · ยอดสมาชิกล่าสุดจาก ' + (D.meta.latestSource || D.meta.source);
   document.getElementById('asof').textContent = asOfSummary();
@@ -1444,32 +1440,49 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   }
 
   // ---------- gender / status ----------
-  function renderSplit(){
-    var g = D.genders, gt = g.reduce(function(s,r){return s+val(r);},0);
-    document.getElementById('gTop').innerHTML = fmt(g[0])+' <em>'+g[0].name+' · '+pct(val(g[0]),gt).toFixed(1)+'%</em>';
-    var gb = document.getElementById('gBar'); gb.innerHTML=''; var gl = document.getElementById('gLeg'); gl.innerHTML='';
-    g.forEach(function(r,i){
-      var c = cssvar(PALETTE[i===0?4:0]);
-      var s = el('i'); s.style.background = c; s.setAttribute('data-w', pct(val(r),gt)+'%'); gb.appendChild(s);
-      gl.appendChild(el('div','', '<b style="background:'+c+'"></b>'+r.name+'<span>'+fmt(r)+'</span>'));
+  function renderGenderPie(){
+    var rows=D.genders;
+    var groups=pieRowsValid(rows)?sortByMembers(rows).map(function(r){
+      return {name:r.name,full:r.name,members:r.members,money:r.money,count:1};
+    }):null;
+    renderPieCard(document.getElementById('genderPie'),groups,{
+      emptyMessage:'ข้อมูลเพศยังไม่พร้อมแสดงเป็นพายกราฟ',
+      headingMembers:'สัดส่วนสมาชิกใหม่ตามเพศ',
+      headingMoney:'สัดส่วนเงินนำส่งงวดแรกตามเพศ',
+      sub:'แสดงครบทุกกลุ่มจาก Tableau เรียงตามจำนวนสมาชิก',
+      subAvg:'ขนาดชิ้นพาย = สัดส่วนสมาชิก · ตัวเลขด้านล่าง = เงินเฉลี่ยต่อคน',
+      totalCaption:'รวมทุกเพศ',totalCaptionAvg:'เงินงวดแรกเฉลี่ยทุกเพศ',
+      help:'แตะชิ้นพายหรือเลือกชื่อเพศเพื่อดูรายละเอียด',
+      detailId:'genderPieDetail',legendLabel:'เพศและสัดส่วน',
+      shareOfMembers:'สมาชิกทุกเพศ',shareOfMoney:'เงินงวดแรกทุกเพศ',asOf:genderStatusAsOf,
+      footnote:function(foot,avgMode){
+        foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+genderStatusAsOf+' · แสดงครบทุกกลุ่มและกระทบยอดกับสมาชิกใหม่สะสมแล้ว'+
+          (avgMode?' · ค่าเฉลี่ยคำนวณจากเงินรวม ÷ จำนวนสมาชิก ไม่ได้นำค่าเฉลี่ยมารวมเป็นสัดส่วน':'');
+      }
     });
-
-    var groups = {active:{n:'ยังเป็นสมาชิก',members:0,money:0}, out:{n:'ลาออกแล้ว',members:0,money:0}};
-    D.statuses.forEach(function(s){ groups[s.group].members += s.members; groups[s.group].money += s.money; });
-    var arr = [groups.active, groups.out], st = arr.reduce(function(s,r){return s+val(r);},0);
-    document.getElementById('sTop').innerHTML = fmt(arr[0])+' <em>ยังเป็นสมาชิก · '+pct(val(arr[0]),st).toFixed(1)+'%</em>';
-    var sb = document.getElementById('sBar'); sb.innerHTML=''; var sl = document.getElementById('sLeg'); sl.innerHTML='';
-    [cssvar('--ahead'), cssvar('--behind')].forEach(function(c,i){
-      var s = el('i'); s.style.background = c; s.setAttribute('data-w', pct(val(arr[i]),st)+'%'); sb.appendChild(s);
-      sl.appendChild(el('div','', '<b style="background:'+c+'"></b>'+arr[i].n+'<span>'+fmt(arr[i])+'</span>'));
+  }
+  function renderStatusPie(){
+    var rows=D.statuses;
+    var groups=pieRowsValid(rows)?sortByMembers(rows).map(function(r){
+      var name=r.name||(r.code+' · '+r.label);
+      return {name:name,full:name,members:r.members,money:r.money,count:1};
+    }):null;
+    renderPieCard(document.getElementById('statusPie'),groups,{
+      emptyMessage:'ข้อมูลสถานะสมาชิกยังไม่พร้อมแสดงเป็นพายกราฟ',
+      headingMembers:'สัดส่วนสมาชิกใหม่ตามสถานะ',
+      headingMoney:'สัดส่วนเงินนำส่งงวดแรกตามสถานะ',
+      sub:'แสดงแยกทุกรหัส MEMBER_STATUS เรียงตามจำนวนสมาชิก',
+      subAvg:'ขนาดชิ้นพาย = สัดส่วนสมาชิก · ตัวเลขด้านล่าง = เงินเฉลี่ยต่อคน',
+      totalCaption:'รวมทุกสถานะ',totalCaptionAvg:'เงินงวดแรกเฉลี่ยทุกสถานะ',
+      help:'แตะชิ้นพาย จุดกลมที่ขอบวง หรือเลือกรหัสสถานะเพื่อดูรายละเอียด',
+      detailId:'statusPieDetail',legendLabel:'สถานะสมาชิกและสัดส่วน',
+      shareOfMembers:'สมาชิกทุกสถานะ',shareOfMoney:'เงินงวดแรกทุกสถานะ',asOf:genderStatusAsOf,
+      footnote:function(foot,avgMode){
+        foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+genderStatusAsOf+' · แสดงครบทั้ง '+rows.length+' รหัสและกระทบยอดกับสมาชิกใหม่สะสมแล้ว · คำอธิบายรหัสเป็นการอนุมานและยังต้องยืนยันกับเจ้าของข้อมูล'+
+          (avgMode?' · ค่าเฉลี่ยคำนวณจากเงินรวม ÷ จำนวนสมาชิก ไม่ได้นำค่าเฉลี่ยมารวมเป็นสัดส่วน':'')+' · ';
+        var tableLink=el('a');tableLink.href='#stTable';tableLink.textContent='ดูตัวเลขแยกทุกรหัสในตารางด้านล่าง';foot.appendChild(tableLink);
+      }
     });
-    document.getElementById('sDesc').innerHTML =
-      'มี <b>'+nf(groups.out.members)+' คน</b> ที่ลาออกไปแล้วภายในปีเดียวกับที่สมัคร ถือเงินงวดแรกเฉลี่ย '+
-      nf(groups.out.money/groups.out.members)+' บาท/คน สูงกว่าค่าเฉลี่ยทั่วไปหลายเท่า';
-
-    setTimeout(function(){
-      document.querySelectorAll('.splitbar i').forEach(function(s){ s.style.width = s.getAttribute('data-w'); });
-    }, 300);
   }
 
   // ---------- findings + caveats (render once) ----------
@@ -1486,8 +1499,8 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     var u = document.getElementById('caveats');
     if(D.meta.summaryAsOf){
       u.appendChild(el('li','',
-        'ยอดรวม รายเดือน ช่องทาง ช่วงอายุ และเงินอัปเดตอัตโนมัติจาก Tableau ถึง ' + summaryAsOf +
-        '; ข้อสังเกตและมิติอื่นยังอ้างอิง snapshot ตามวันที่ที่ระบุ ไม่ได้คำนวณใหม่โดยการคาดเดา'));
+        'ยอดรวม รายเดือน ช่องทาง ช่วงอายุ อาชีพ พื้นที่ เพศ สถานะ และเงินอัปเดตอัตโนมัติจาก Tableau ถึง ' + summaryAsOf +
+        '; แคมเปญและข้อสังเกตยังอ้างอิง snapshot ตามวันที่ที่ระบุ ไม่ได้คำนวณใหม่โดยการคาดเดา'));
     }
     D.caveats.forEach(function(t){ u.appendChild(el('li','',t)); });
   })();
@@ -1521,12 +1534,17 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     var ageSingle = 'ข้อมูล ณ ' + ageAsOf;
     var occupationSingle = occupationAsOf===occupationMoneyAsOf?'ข้อมูล ณ '+occupationAsOf:'จำนวนคน ณ '+occupationAsOf+' · เงิน ณ '+occupationMoneyAsOf;
     var areaSingle = areaAsOf===areaMoneyAsOf?'ข้อมูล ณ '+areaAsOf:'จำนวนคน ณ '+areaAsOf+' · เงิน ณ '+areaMoneyAsOf;
-    [['cpTag',single],['ageTag',ageSingle],['gsTag',single],['ocTag',occupationSingle],['rgTag',areaSingle]].forEach(function(p){
+    [['cpTag',single],['ageTag',ageSingle],['gsTag','ข้อมูล ณ '+genderStatusAsOf],['ocTag',occupationSingle],['rgTag',areaSingle]].forEach(function(p){
       var node = document.getElementById(p[0]); if(node) node.textContent = p[1];
     });
     asOfNote('cpAsOf', D.campaigns, {membersAsOf: detailAsOf});
     asOfNote('ageAsOf', D.ages, {membersAsOf: ageAsOf});
-    asOfNote('gsAsOf', D.genders, {membersAsOf: detailAsOf});
+    var genderMembers=D.genders.reduce(function(n,r){return n+r.members;},0);
+    var statusMembers=D.statuses.reduce(function(n,r){return n+r.members;},0);
+    var headline=Number(D.totals.members)||0;
+    document.getElementById('gsAsOf').textContent=genderMembers===headline&&statusMembers===headline
+      ?'ข้อมูลเพศและสถานะรวมได้ '+nf(headline)+' คนตรงกับสมาชิกใหม่สะสม · ข้อมูล ณ '+genderStatusAsOf
+      :'ข้อมูลเพศรวม '+nf(genderMembers)+' คน · สถานะรวม '+nf(statusMembers)+' คน · ยอดสมาชิกใหม่สะสม '+nf(headline)+' คน · ข้อมูล ณ '+genderStatusAsOf;
     // Occupations only show an average when the metric toggle asks for one.
     asOfNote('ocAsOf', D.occupations, occupationAsOf===occupationMoneyAsOf?{membersAsOf:occupationAsOf}:{membersAsOf:occupationAsOf,moneyAsOf:occupationMoneyAsOf,avgNote:metric==='avg'});
     // The province table always carries an average column.
@@ -1543,6 +1561,8 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     renderAgePie();
     renderOccupationPie();
     renderRegionPie();
+    renderGenderPie();
+    renderStatusPie();
 
     renderTable(document.getElementById('chTable'), D.channels,
       [nameCol('ช่องทาง'), colMembers, colShare, colMoney, colAvg], true);
@@ -1557,7 +1577,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
        {key:'label', label:'ความหมาย (อนุมาน)', get:function(r){return r.label;}, fmt:function(r){return r.label;}},
        colMembers, colShare, colMoney], true, 'members');
 
-    renderSplit();
     renderAsOfLabels();
   }
   renderAll();

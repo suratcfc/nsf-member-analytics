@@ -17,7 +17,9 @@ const SAFE_REQUIRED_FIELDS = [
   "วดป_วันเกิด",
   "อาชีพ",
   "ภาค",
-  "จังหวัด"
+  "จังหวัด",
+  "เพศ",
+  "MEMBER_STATUS"
 ];
 
 const serverUrl = (process.env.TABLEAU_SERVER_URL || DEFAULTS.serverUrl).replace(/\/$/, "");
