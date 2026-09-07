@@ -567,7 +567,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   <div class="wrap">
     <div class="sec-head"><h2>ช่วงอายุ</h2><span class="hint">คำนวณจากปีเกิดเทียบปี 2569 · <span class="asof-tag" id="ageTag"></span></span></div>
     <div class="sec-rule"></div>
-    <div class="card bars" id="ageBars" style="--labw:130px"></div>
+    <div class="card channel-pie-card" id="agePie"></div>
     <div style="height:16px"></div>
     <div class="card tblwrap"><table id="ageTable"></table></div>
     <p class="asof-note" id="ageAsOf"></p>
@@ -1132,7 +1132,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   }
 
 
-  // ---------- pie card (recruitment channel + channel type) ----------
+  // ---------- pie card (recruitment channel + channel type + age range) ----------
   // Slice area uses an additive measure only. Averages remain a label, never a share of summed averages.
   function pieRowsValid(rows){
     return Array.isArray(rows)&&rows.length>0&&!rows.some(function(r){
@@ -1174,7 +1174,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     if(!groups){node.appendChild(el('p','',opt.emptyMessage));return;}
     var moneyMode=metric==='money',avgMode=metric==='avg',basis=moneyMode?'money':'members';
     var totals=groups.reduce(function(t,r){t.members+=r.members;t.money+=r.money;return t;},{members:0,money:0});
-    var total=totals[basis],colors=['#4E93DB','#E3B655','#E38C4A','#A2AE69','#D68FA9','#8295A7'];
+    var total=totals[basis],colors=['#4E93DB','#E3B655','#E38C4A','#A2AE69','#D68FA9','#8295A7','#43BFC4','#4FC983'];
     var head=el('div','channel-pie-head'),intro=el('div');
     var heading=el('h3');heading.textContent=moneyMode?opt.headingMoney:opt.headingMembers;intro.appendChild(heading);
     var sub=el('p');sub.textContent=avgMode?opt.subAvg:opt.sub;intro.appendChild(sub);head.appendChild(intro);
@@ -1186,7 +1186,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     var layout=el('div','channel-pie-layout'),figure=el('div','channel-pie-figure');
     var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
     svg.setAttribute('viewBox','0 0 400 400');svg.setAttribute('class','channel-pie-svg');svg.setAttribute('role','group');
-    svg.setAttribute('aria-label',heading.textContent+' รวม '+nf(total)+(moneyMode?' บาท':' คน')+' · ข้อมูลถึง '+summaryAsOf);
+    svg.setAttribute('aria-label',heading.textContent+' รวม '+nf(total)+(moneyMode?' บาท':' คน')+' · ข้อมูลถึง '+(opt.asOf||summaryAsOf));
     figure.appendChild(svg);
     var help=el('p','channel-pie-help');help.textContent=opt.help;figure.appendChild(help);
     var detail=el('div','channel-pie-detail');detail.id=opt.detailId;detail.setAttribute('role','status');detail.setAttribute('aria-live','polite');
@@ -1292,6 +1292,32 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       footnote:function(foot,avgMode){
         foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+summaryAsOf+' · แสดงครบทุกรหัส '+rows.length+' รายการ ไม่ยุบเป็นกลุ่ม “อื่น ๆ” · ชิ้นที่เล็กกว่า 0.5% คงสัดส่วนจริงไว้และทำเครื่องหมายเป็นจุดกลมที่ขอบวง กดที่จุดเพื่อดูรายละเอียดได้'+
           (avgMode?' · ค่าเฉลี่ยคำนวณจากเงินรวม ÷ จำนวนสมาชิก ไม่ได้นำค่าเฉลี่ยมารวมเป็นสัดส่วน':'');
+      }
+    });
+  }
+  function renderAgePie(){
+    var rows=D.ages;
+    var groups=pieRowsValid(rows)?rows.map(function(r){
+      return {name:r.label,full:r.label,members:r.members,money:r.money,count:1};
+    }):null;
+    renderPieCard(document.getElementById('agePie'),groups,{
+      emptyMessage:'ข้อมูลช่วงอายุยังไม่พร้อมแสดงเป็นพายกราฟ',
+      headingMembers:'สัดส่วนสมาชิกใหม่ตามช่วงอายุ',
+      headingMoney:'สัดส่วนเงินนำส่งงวดแรกตามช่วงอายุ',
+      sub:'แสดงครบทั้ง 7 ช่วงอายุ เรียงตามลำดับอายุ',
+      subAvg:'ขนาดชิ้นพาย = สัดส่วนสมาชิก · ตัวเลขด้านขวา = เงินเฉลี่ยต่อคน',
+      totalCaption:'รวมทุกช่วงอายุ',
+      totalCaptionAvg:'เงินงวดแรกเฉลี่ยทุกช่วงอายุ',
+      help:'แตะชิ้นพาย จุดกลมที่ขอบวง หรือเลือกช่วงอายุเพื่อดูรายละเอียด',
+      detailId:'agePieDetail',
+      legendLabel:'ช่วงอายุและสัดส่วน',
+      shareOfMembers:'สมาชิกทุกช่วงอายุ',
+      shareOfMoney:'เงินงวดแรกทุกช่วงอายุ',
+      asOf:detailAsOf,
+      footnote:function(foot,avgMode){
+        foot.textContent='ที่มา: Tableau · VIEW_BI_DS · ข้อมูลถึง '+detailAsOf+' · แสดงครบทั้ง 7 ช่วงอายุ โดยชิ้นที่เล็กกว่า 0.5% คงสัดส่วนจริงไว้และทำเครื่องหมายเป็นจุดกลมที่ขอบวง'+
+          (avgMode?' · ค่าเฉลี่ยคำนวณจากเงินรวม ÷ จำนวนสมาชิก ไม่ได้นำค่าเฉลี่ยมารวมเป็นสัดส่วน':'')+' · ';
+        var tableLink=el('a');tableLink.href='#ageTable';tableLink.textContent='ดูตัวเลขครบทุกช่วงอายุในตารางด้านล่าง';foot.appendChild(tableLink);
       }
     });
   }
@@ -1457,7 +1483,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     renderDailyMembers();
     renderChannelPie();
     renderChannelTypePie();
-    renderBars(document.getElementById('ageBars'), D.ages);
+    renderAgePie();
     renderBars(document.getElementById('ocBars'), D.occupations);
     renderBars(document.getElementById('rgBars'), D.regions);
 
