@@ -17,6 +17,7 @@ window.NSF_TABLEAU_LIVE = {
     "occupationMoneyAsOf": "3 ก.ย. 2569",
     "areaAsOf": "3 ก.ย. 2569",
     "areaMoneyAsOf": "3 ก.ย. 2569",
+    "genderStatusAsOf": "3 ก.ย. 2569",
     "liveSections": [
       "totals",
       "months",
@@ -30,7 +31,9 @@ window.NSF_TABLEAU_LIVE = {
       "ages",
       "occupations",
       "regions",
-      "provinces"
+      "provinces",
+      "genders",
+      "statuses"
     ]
   },
   "totals": {
@@ -3246,6 +3249,62 @@ window.NSF_TABLEAU_LIVE = {
       "name": "จังหวัดอื่นๆ (57 จังหวัด)",
       "members": 29295,
       "money": 8615665.31
+    }
+  ],
+  "genders": [
+    {
+      "name": "หญิง",
+      "members": 35160,
+      "money": 12925763.89
+    },
+    {
+      "name": "ชาย",
+      "members": 28836,
+      "money": 9996112.58
+    }
+  ],
+  "statuses": [
+    {
+      "code": "A",
+      "name": "A · ปกติ",
+      "label": "ปกติ",
+      "members": 63512,
+      "money": 22373428.47
+    },
+    {
+      "code": "Q",
+      "name": "Q · ลาออก",
+      "label": "ลาออก",
+      "members": 370,
+      "money": 411949
+    },
+    {
+      "code": "A3",
+      "name": "A3 · ปกติ (สถานะย่อย)",
+      "label": "ปกติ (สถานะย่อย)",
+      "members": 63,
+      "money": 31150
+    },
+    {
+      "code": "R3",
+      "name": "R3 · ลาออก",
+      "label": "ลาออก",
+      "members": 40,
+      "money": 103749
+    },
+    {
+      "code": "C",
+      "name": "C · ไม่ทราบ",
+      "label": "ไม่ทราบ",
+      "members": 10,
+      "money": 1050
+    },
+    {
+      "code": "R1",
+      "name": "R1 · ลาออก",
+      "label": "ลาออก",
+      "members": 1,
+      "money": 550
     }
   ]
 };
