@@ -18,9 +18,9 @@ const SAFE_REQUIRED_FIELDS = [
   "อาชีพ",
   "ภาค",
   "จังหวัด",
-  "เพศ",
   "MEMBER_STATUS"
 ];
+const PREFERRED_GENDER_FIELDS = ["เพศ", "GENDER_NAME", "GENDER", "SEX_NAME", "SEX", "เพศสมาชิก"];
 
 const serverUrl = (process.env.TABLEAU_SERVER_URL || DEFAULTS.serverUrl).replace(/\/$/, "");
 const siteContentUrl = process.env.TABLEAU_SITE_CONTENT_URL || DEFAULTS.siteContentUrl;
@@ -128,6 +128,15 @@ async function readMetadata(token) {
   );
 }
 
+function resolveGenderField(captions) {
+  for (const field of PREFERRED_GENDER_FIELDS) {
+    if (captions.has(field)) return field;
+  }
+  const matches = [...captions].filter((field) => /gender|sex|เพศ/i.test(field));
+  if (matches.length === 1) return matches[0];
+  throw new Error(`Connected safely, but could not resolve one approved gender aggregate field (matched ${matches.length})`);
+}
+
 let session;
 try {
   session = await signIn();
@@ -138,6 +147,7 @@ try {
       .filter((caption) => typeof caption === "string")
   );
   const missing = SAFE_REQUIRED_FIELDS.filter((field) => !captions.has(field));
+  const genderField = resolveGenderField(captions);
 
   if (missing.length) {
     throw new Error(`Connected safely, but required aggregate fields are missing: ${missing.join(", ")}`);
@@ -148,6 +158,7 @@ try {
   console.log(`Site: ${siteContentUrl}`);
   console.log(`Datasource: ${datasourceLuid}`);
   console.log(`Approved aggregate fields found: ${SAFE_REQUIRED_FIELDS.join(", ")}`);
+  console.log(`Approved gender aggregate field found: ${genderField}`);
   console.log("No Tableau data rows or unrestricted metadata were written to logs");
 } finally {
   if (session?.token) await signOut(session.token);

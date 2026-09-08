@@ -52,6 +52,7 @@ const STATUS_LABELS = new Map([
   ["R3", "ลาออก"],
   ["C", "ไม่ทราบ"]
 ]);
+const PREFERRED_GENDER_FIELDS = ["เพศ", "GENDER_NAME", "GENDER", "SEX_NAME", "SEX", "เพศสมาชิก"];
 const AGE_GROUPS = [
   { label: "15–19 ปี", min: 15, max: 19 },
   { label: "20–24 ปี", min: 20, max: 24 },
@@ -192,6 +193,32 @@ async function queryDatasource(token, label, fields, types, range = {}) {
   );
   if (!Array.isArray(body?.data)) throw new Error(`${label} returned no aggregate rows`);
   return body.data;
+}
+
+async function readDatasourceMetadata(token) {
+  const body = await requestJson(
+    `${serverUrl}/api/v1/vizql-data-service/read-metadata`,
+    {
+      method: "POST",
+      headers: { "X-Tableau-Auth": token },
+      body: JSON.stringify({ datasource: { datasourceLuid } })
+    },
+    "Gender field metadata check"
+  );
+  return new Set(
+    (Array.isArray(body?.data) ? body.data : [])
+      .map((field) => field?.fieldCaption)
+      .filter((caption) => typeof caption === "string")
+  );
+}
+
+function resolveGenderField(captions) {
+  for (const field of PREFERRED_GENDER_FIELDS) {
+    if (captions.has(field)) return field;
+  }
+  const matches = [...captions].filter((field) => /gender|sex|เพศ/i.test(field));
+  if (matches.length === 1) return matches[0];
+  throw new Error(`Could not resolve one approved gender aggregate field (matched ${matches.length})`);
 }
 
 function expectSingleRow(rows, label) {
@@ -511,6 +538,8 @@ let token;
 
 try {
   token = await signIn();
+  const genderField = resolveGenderField(await readDatasourceMetadata(token));
+  console.log(`Approved gender aggregate field: ${genderField}`);
 
   const summaryRows = await queryDatasource(token, "New-member summary query", [
     calculation("members", "COUNTD([INVESTOR_CODE])"),
@@ -571,7 +600,7 @@ try {
       { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
     ], ["1", "3"]),
     queryDatasource(token, "Gender aggregate query", [
-      { fieldCaption: "เพศ", fieldAlias: "name" },
+      { fieldCaption: genderField, fieldAlias: "name" },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
       { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
     ], ["1", "3"]),
