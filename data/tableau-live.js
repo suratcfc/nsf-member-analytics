@@ -3064,7 +3064,7 @@ window.NSF_TABLEAU_LIVE = {
   "campaigns": [
     {
       "code": "-",
-      "name": "-",
+      "name": "ไม่มีแคมเปญ",
       "members": 44195,
       "money": 18513996.24
     },
