@@ -650,7 +650,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     D.totals = Object.assign({}, D.totals, LIVE.totals || {});
     D.memberDrive = Object.assign({}, D.memberDrive, LIVE.memberDrive || {});
     D.priorYear = Object.assign({}, D.priorYear, LIVE.priorYear || {});
-    ['months','priorMonths','historicalYears','cumulativeYears','daily','priorDaily','channels','channelTypes','ages','occupations','regions','provinces','genders','statuses'].forEach(function(key){
+    ['months','priorMonths','historicalYears','cumulativeYears','daily','priorDaily','channels','channelTypes','campaigns','ages','occupations','regions','provinces','genders','statuses','findings','caveats'].forEach(function(key){
       if(Array.isArray(LIVE[key])) D[key] = LIVE[key];
     });
   }
@@ -683,16 +683,23 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 
   // Every date shown comes from meta, so a card can never imply it shares the live total's date.
   function asOfSummary(){
-    var liveSummary='ยอดรวม รายเดือน ช่องทาง ช่วงอายุ อาชีพ และพื้นที่ ณ '+summaryAsOf;
-    if(genderStatusAsOf===summaryAsOf) liveSummary='ยอดรวม รายเดือน ช่องทาง ช่วงอายุ อาชีพ พื้นที่ เพศ และสถานะ ณ '+summaryAsOf;
-    else liveSummary+=' · เพศและสถานะ ณ '+genderStatusAsOf;
-    return liveSummary+' · แคมเปญและข้อสังเกต ณ '+detailAsOf;
+    var sections=['ยอดรวม','รายเดือน','ช่องทาง','ช่วงอายุ','อาชีพ','พื้นที่'];
+    var extras=[];
+    if(genderStatusAsOf===summaryAsOf) sections.push('เพศ','สถานะ');
+    else extras.push('เพศและสถานะ ณ '+genderStatusAsOf);
+    if(campaignAsOf===summaryAsOf) sections.push('แคมเปญ');
+    else extras.push('แคมเปญ ณ '+campaignAsOf);
+    if(findingsAsOf===summaryAsOf) sections.push('ข้อสังเกต');
+    else extras.push('ข้อสังเกต ณ '+findingsAsOf);
+    return sections.join(' ')+' ณ '+summaryAsOf+(extras.length?' · '+extras.join(' · '):'');
   }
 
   // ---------- header numbers ----------
   var summaryAsOf = D.meta.summaryAsOf || D.meta.dataAsOf;
   var memberBreakdownAsOf = D.meta.memberBreakdownAsOf || D.meta.detailAsOf || D.meta.dataAsOf;
   var detailAsOf = D.meta.detailAsOf || D.meta.dataAsOf;
+  var campaignAsOf = D.meta.campaignAsOf || detailAsOf;
+  var findingsAsOf = D.meta.findingsAsOf || campaignAsOf;
   var ageAsOf = D.meta.ageAsOf || detailAsOf;
   var occupationAsOf = D.meta.occupationAsOf || memberBreakdownAsOf;
   var occupationMoneyAsOf = D.meta.occupationMoneyAsOf || detailAsOf;
@@ -703,7 +710,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     D.meta.periodLabel + ' · ยอดสมาชิกล่าสุดจาก ' + (D.meta.latestSource || D.meta.source);
   document.getElementById('asof').textContent = asOfSummary();
   document.getElementById('fSource').textContent =
-    (D.meta.summarySource || D.meta.source) + ' · มิติ snapshot: ' + D.meta.source;
+    (D.meta.summarySource || D.meta.source) + ' · มิติ aggregate อัปเดตอัตโนมัติจาก Tableau';
   document.getElementById('fDef').textContent = D.meta.definition;
   document.getElementById('fAsOf').textContent = asOfSummary();
 
@@ -1488,7 +1495,7 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   // ---------- findings + caveats (render once) ----------
   (function(){
     document.getElementById('findingsHint').textContent =
-      'วิเคราะห์จาก snapshot ถึง ' + (D.meta.detailAsOf || D.meta.dataAsOf);
+      'วิเคราะห์จากข้อมูล aggregate ล่าสุดถึง ' + findingsAsOf;
     var f = document.getElementById('findings');
     D.findings.forEach(function(x){
       var c = el('div','card fcard '+(x.tone||'neutral'));
@@ -1497,11 +1504,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       f.appendChild(c);
     });
     var u = document.getElementById('caveats');
-    if(D.meta.summaryAsOf){
-      u.appendChild(el('li','',
-        'ยอดรวม รายเดือน ช่องทาง ช่วงอายุ อาชีพ พื้นที่ เพศ สถานะ และเงินอัปเดตอัตโนมัติจาก Tableau ถึง ' + summaryAsOf +
-        '; แคมเปญและข้อสังเกตยังอ้างอิง snapshot ตามวันที่ที่ระบุ ไม่ได้คำนวณใหม่โดยการคาดเดา'));
-    }
     D.caveats.forEach(function(t){ u.appendChild(el('li','',t)); });
   })();
 
@@ -1530,14 +1532,14 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
     node.textContent = parts.join(' · ');
   }
   function renderAsOfLabels(){
-    var single = 'ข้อมูล ณ ' + detailAsOf;
+    var campaignSingle = 'ข้อมูล ณ ' + campaignAsOf;
     var ageSingle = 'ข้อมูล ณ ' + ageAsOf;
     var occupationSingle = occupationAsOf===occupationMoneyAsOf?'ข้อมูล ณ '+occupationAsOf:'จำนวนคน ณ '+occupationAsOf+' · เงิน ณ '+occupationMoneyAsOf;
     var areaSingle = areaAsOf===areaMoneyAsOf?'ข้อมูล ณ '+areaAsOf:'จำนวนคน ณ '+areaAsOf+' · เงิน ณ '+areaMoneyAsOf;
-    [['cpTag',single],['ageTag',ageSingle],['gsTag','ข้อมูล ณ '+genderStatusAsOf],['ocTag',occupationSingle],['rgTag',areaSingle]].forEach(function(p){
+    [['cpTag',campaignSingle],['ageTag',ageSingle],['gsTag','ข้อมูล ณ '+genderStatusAsOf],['ocTag',occupationSingle],['rgTag',areaSingle]].forEach(function(p){
       var node = document.getElementById(p[0]); if(node) node.textContent = p[1];
     });
-    asOfNote('cpAsOf', D.campaigns, {membersAsOf: detailAsOf});
+    asOfNote('cpAsOf', D.campaigns, {membersAsOf: campaignAsOf});
     asOfNote('ageAsOf', D.ages, {membersAsOf: ageAsOf});
     var genderMembers=D.genders.reduce(function(n,r){return n+r.members;},0);
     var statusMembers=D.statuses.reduce(function(n,r){return n+r.members;},0);

@@ -21,6 +21,11 @@ const SAFE_REQUIRED_FIELDS = [
   "MEMBER_STATUS"
 ];
 const PREFERRED_GENDER_FIELDS = ["เพศ", "GENDER_NAME", "GENDER", "SEX_NAME", "SEX", "เพศสมาชิก"];
+const PREFERRED_CAMPAIGN_FIELDS = [
+  "CAMPAIGN_NAME", "NAME_CAMPAIGN", "CAMPAIGN", "CAMPAIGN_CODE", "CAMPAIGN_ID",
+  "ชื่อแคมเปญ", "แคมเปญ", "รหัสแคมเปญ", "ชื่อโครงการ", "โครงการ",
+  "PROJECT_NAME", "PROJECT_CODE"
+];
 
 const serverUrl = (process.env.TABLEAU_SERVER_URL || DEFAULTS.serverUrl).replace(/\/$/, "");
 const siteContentUrl = process.env.TABLEAU_SITE_CONTENT_URL || DEFAULTS.siteContentUrl;
@@ -137,6 +142,15 @@ function resolveGenderField(captions) {
   throw new Error(`Connected safely, but could not resolve one approved gender aggregate field (matched ${matches.length})`);
 }
 
+function resolveCampaignField(captions) {
+  for (const field of PREFERRED_CAMPAIGN_FIELDS) {
+    if (captions.has(field)) return field;
+  }
+  const matches = [...captions].filter((field) => /campaign|แคมเปญ|โครงการ/i.test(field));
+  if (matches.length === 1) return matches[0];
+  throw new Error(`Connected safely, but could not resolve one approved campaign aggregate field (matched ${matches.length})`);
+}
+
 let session;
 try {
   session = await signIn();
@@ -148,6 +162,7 @@ try {
   );
   const missing = SAFE_REQUIRED_FIELDS.filter((field) => !captions.has(field));
   const genderField = resolveGenderField(captions);
+  const campaignField = resolveCampaignField(captions);
 
   if (missing.length) {
     throw new Error(`Connected safely, but required aggregate fields are missing: ${missing.join(", ")}`);
@@ -159,6 +174,7 @@ try {
   console.log(`Datasource: ${datasourceLuid}`);
   console.log(`Approved aggregate fields found: ${SAFE_REQUIRED_FIELDS.join(", ")}`);
   console.log(`Approved gender aggregate field found: ${genderField}`);
+  console.log(`Approved campaign aggregate field found: ${campaignField}`);
   console.log("No Tableau data rows or unrestricted metadata were written to logs");
 } finally {
   if (session?.token) await signOut(session.token);

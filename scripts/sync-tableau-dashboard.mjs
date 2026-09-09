@@ -53,6 +53,11 @@ const STATUS_LABELS = new Map([
   ["C", "ไม่ทราบ"]
 ]);
 const PREFERRED_GENDER_FIELDS = ["เพศ", "GENDER_NAME", "GENDER", "SEX_NAME", "SEX", "เพศสมาชิก"];
+const PREFERRED_CAMPAIGN_FIELDS = [
+  "CAMPAIGN_NAME", "NAME_CAMPAIGN", "CAMPAIGN", "CAMPAIGN_CODE", "CAMPAIGN_ID",
+  "ชื่อแคมเปญ", "แคมเปญ", "รหัสแคมเปญ", "ชื่อโครงการ", "โครงการ",
+  "PROJECT_NAME", "PROJECT_CODE"
+];
 const AGE_GROUPS = [
   { label: "15–19 ปี", min: 15, max: 19 },
   { label: "20–24 ปี", min: 20, max: 24 },
@@ -203,7 +208,7 @@ async function readDatasourceMetadata(token) {
       headers: { "X-Tableau-Auth": token },
       body: JSON.stringify({ datasource: { datasourceLuid } })
     },
-    "Gender field metadata check"
+    "Approved aggregate field metadata check"
   );
   return new Set(
     (Array.isArray(body?.data) ? body.data : [])
@@ -219,6 +224,15 @@ function resolveGenderField(captions) {
   const matches = [...captions].filter((field) => /gender|sex|เพศ/i.test(field));
   if (matches.length === 1) return matches[0];
   throw new Error(`Could not resolve one approved gender aggregate field (matched ${matches.length})`);
+}
+
+function resolveCampaignField(captions) {
+  for (const field of PREFERRED_CAMPAIGN_FIELDS) {
+    if (captions.has(field)) return field;
+  }
+  const matches = [...captions].filter((field) => /campaign|แคมเปญ|โครงการ/i.test(field));
+  if (matches.length === 1) return matches[0];
+  throw new Error(`Could not resolve one approved campaign aggregate field (matched ${matches.length})`);
 }
 
 function expectSingleRow(rows, label) {
@@ -403,6 +417,103 @@ function topRowsWithOther(rows, limit, unit) {
   return top;
 }
 
+function campaignRows(rows, totalMembers, totalMoney) {
+  return validateDimensionRows(
+    dimensionRows(rows, "Campaign aggregate query"),
+    totalMembers,
+    totalMoney,
+    "Campaign aggregate query"
+  ).map((row) => ({
+    code: row.name === "ไม่ระบุ" ? "-" : row.name,
+    name: row.name === "ไม่ระบุ" ? "ไม่มีแคมเปญ" : row.name,
+    members: row.members,
+    money: row.money
+  }));
+}
+
+function formatNumber(value) {
+  return Math.round(Number(value) || 0).toLocaleString("en-US");
+}
+
+function formatPercent(value, total) {
+  return total ? `${(value / total * 100).toFixed(1)}%` : "0.0%";
+}
+
+function averageMoney(row) {
+  return row?.members ? row.money / row.members : 0;
+}
+
+function latestFindings({ totals, channels, campaigns, ages, occupations, regions, displayDate }) {
+  const findings = [];
+  const overallAverage = totals.members ? totals.money / totals.members : 0;
+  const topChannel = channels[0];
+  const topThreeChannels = channels.slice(0, 3);
+  const topThreeMembers = sum(topThreeChannels, "members");
+  const noCampaign = campaigns.find((row) => row.code === "-" || /ไม่มีแคมเปญ|ไม่ระบุ/.test(row.name));
+  const topNamedCampaign = campaigns.find((row) => row !== noCampaign);
+  const topAge = [...ages].sort((a, b) => b.members - a.members)[0];
+  const topOccupation = occupations[0];
+  const topRegionMembers = regions[0];
+  const topRegionMoney = [...regions].sort((a, b) => b.money - a.money)[0];
+
+  findings.push({
+    title: `มัธยฐานเงินงวดแรก ${formatNumber(totals.median)} บาท`,
+    body: `สมาชิกใหม่ ${formatNumber(totals.members)} คน ณ ${displayDate} มีเงินงวดแรกรวม ${formatNumber(totals.money)} บาท เฉลี่ย ${formatNumber(overallAverage)} บาท/คน; มัธยฐาน ${formatNumber(totals.median)} บาท${totals.min === totals.median ? " เท่ากับค่าต่ำสุดของชุดข้อมูล" : ` และค่าต่ำสุด ${formatNumber(totals.min)} บาท`}`,
+    tone: totals.median < overallAverage * 0.5 ? "warn" : "neutral"
+  });
+
+  if (topChannel) {
+    findings.push({
+      title: `${topChannel.name} เป็นช่องทางหลัก ${formatPercent(topChannel.members, totals.members)}`,
+      body: `${formatNumber(topChannel.members)} คน เงินงวดแรก ${formatNumber(topChannel.money)} บาท เฉลี่ย ${formatNumber(averageMoney(topChannel))} บาท/คน เทียบค่าเฉลี่ยรวม ${formatNumber(overallAverage)} บาท/คน`,
+      tone: topChannel.members / totals.members >= 0.4 ? "warn" : "neutral"
+    });
+  }
+
+  if (topThreeChannels.length === 3) {
+    findings.push({
+      title: `3 ช่องทางแรกคิดเป็น ${formatPercent(topThreeMembers, totals.members)} ของสมาชิกใหม่`,
+      body: `${topThreeChannels.map((row) => row.name).join(" + ")} รวม ${formatNumber(topThreeMembers)} คน การกระจุกตัวระดับนี้ควรติดตามความต่อเนื่องของช่องทางหลัก`,
+      tone: topThreeMembers / totals.members >= 0.75 ? "warn" : "neutral"
+    });
+  }
+
+  if (topNamedCampaign) {
+    const assignedMembers = totals.members - Number(noCampaign?.members || 0);
+    findings.push({
+      title: `${topNamedCampaign.name} เป็นแคมเปญที่มีสมาชิกสูงสุด`,
+      body: `${formatNumber(topNamedCampaign.members)} คน (${formatPercent(topNamedCampaign.members, totals.members)}) เงินงวดแรก ${formatNumber(topNamedCampaign.money)} บาท เฉลี่ย ${formatNumber(averageMoney(topNamedCampaign))} บาท/คน; สมาชิกที่มีรหัสแคมเปญรวม ${formatNumber(assignedMembers)} คน (${formatPercent(assignedMembers, totals.members)})`,
+      tone: "neutral"
+    });
+  }
+
+  if (topAge) {
+    findings.push({
+      title: `${topAge.label || topAge.name} เป็นช่วงอายุที่มีสมาชิกมากที่สุด`,
+      body: `${formatNumber(topAge.members)} คน (${formatPercent(topAge.members, totals.members)}) เงินงวดแรก ${formatNumber(topAge.money)} บาท เฉลี่ย ${formatNumber(averageMoney(topAge))} บาท/คน`,
+      tone: "neutral"
+    });
+  }
+
+  if (topOccupation) {
+    findings.push({
+      title: `${topOccupation.name} เป็นกลุ่มอาชีพหลัก`,
+      body: `${formatNumber(topOccupation.members)} คน (${formatPercent(topOccupation.members, totals.members)}) เงินงวดแรก ${formatNumber(topOccupation.money)} บาท เฉลี่ย ${formatNumber(averageMoney(topOccupation))} บาท/คน`,
+      tone: "neutral"
+    });
+  }
+
+  if (topRegionMembers && topRegionMoney) {
+    findings.push({
+      title: `${topRegionMembers.name} มีสมาชิกใหม่มากที่สุด`,
+      body: `${formatNumber(topRegionMembers.members)} คน (${formatPercent(topRegionMembers.members, totals.members)}); ส่วน${topRegionMoney.name}มีเงินงวดแรกสูงสุด ${formatNumber(topRegionMoney.money)} บาท (${formatPercent(topRegionMoney.money, totals.money)})`,
+      tone: "neutral"
+    });
+  }
+
+  return findings;
+}
+
 function ageCondition(group) {
   if (group.unknown) {
     return `ISNULL([วดป_วันเกิด]) OR YEAR([วดป_วันเกิด]) > ${YEAR_AD} OR ${YEAR_AD} - YEAR([วดป_วันเกิด]) < 15`;
@@ -538,8 +649,11 @@ let token;
 
 try {
   token = await signIn();
-  const genderField = resolveGenderField(await readDatasourceMetadata(token));
+  const metadataCaptions = await readDatasourceMetadata(token);
+  const genderField = resolveGenderField(metadataCaptions);
+  const campaignField = resolveCampaignField(metadataCaptions);
   console.log(`Approved gender aggregate field: ${genderField}`);
+  console.log(`Approved campaign aggregate field: ${campaignField}`);
 
   const summaryRows = await queryDatasource(token, "New-member summary query", [
     calculation("members", "COUNTD([INVESTOR_CODE])"),
@@ -563,7 +677,7 @@ try {
   const asOf = normalizeDate(rawAsOf, "New-member summary query");
   const priorAsOf = `${PRIOR_YEAR_AD}${asOf.slice(4)}`;
 
-  const [monthResult, dailyResult, channelResult, channelTypeResult, ageResult, occupationResult, regionResult, provinceResult, genderResult, statusResult, priorSummaryRows, priorMonthResult, priorDailyResult] = await Promise.all([
+  const [monthResult, dailyResult, channelResult, channelTypeResult, campaignResult, ageResult, occupationResult, regionResult, provinceResult, genderResult, statusResult, priorSummaryRows, priorMonthResult, priorDailyResult] = await Promise.all([
     queryDatasource(token, "Monthly aggregate query", [
       { fieldCaption: "TR_DATE", function: "TRUNC_MONTH", fieldAlias: "month", sortPriority: 1 },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
@@ -580,6 +694,11 @@ try {
     ], ["1", "3"]),
     queryDatasource(token, "Channel-type aggregate query", [
       { fieldCaption: "TR_CHANNEL_TYPE", fieldAlias: "code" },
+      { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
+      { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
+    ], ["1", "3"]),
+    queryDatasource(token, "Campaign aggregate query", [
+      { fieldCaption: campaignField, fieldAlias: "name" },
       { fieldCaption: "INVESTOR_CODE", function: "COUNTD", fieldAlias: "members" },
       { fieldCaption: "PRINCIPLE", function: "SUM", fieldAlias: "money" }
     ], ["1", "3"]),
@@ -656,6 +775,11 @@ try {
   const daily = dailyRows(dailyResult, asOf);
   const channels = channelRows(channelResult);
   const channelTypes = channelTypeRows(channelTypeResult);
+  const allCampaigns = campaignRows(campaignResult, members, money);
+  const campaigns = topRowsWithOther(allCampaigns, 14, "แคมเปญ").map((row) => ({
+    ...row,
+    code: row.code || "*"
+  }));
   const ages = ageRows(expectSingleRow(ageResult, "Age aggregate query"), members, money);
   const occupations = validateDimensionRows(dimensionRows(occupationResult, "Occupation aggregate query"), members, money, "Occupation aggregate query");
   const regions = validateDimensionRows(dimensionRows(regionResult, "Region aggregate query"), members, money, "Region aggregate query");
@@ -663,7 +787,7 @@ try {
   const provinces = topRowsWithOther(allProvinces, 20, "จังหวัด");
   const genders = validateDimensionRows(dimensionRows(genderResult, "Gender aggregate query"), members, money, "Gender aggregate query");
   const statuses = statusRows(statusResult, members, money);
-  if (!months.length || !priorMonths.length || !daily.length || !priorDaily.length || !channels.length || !channelTypes.length || !ages.length || !occupations.length || !regions.length || !provinces.length || !genders.length || !statuses.length) {
+  if (!months.length || !priorMonths.length || !daily.length || !priorDaily.length || !channels.length || !channelTypes.length || !campaigns.length || !ages.length || !occupations.length || !regions.length || !provinces.length || !genders.length || !statuses.length) {
     throw new Error("One or more approved aggregate breakdowns returned no rows");
   }
   if (!Number.isInteger(priorMembers) || priorMembers < 1 || priorMembers > 1_000_000) {
@@ -735,6 +859,23 @@ try {
   }
 
   const displayDate = thaiDate(asOf);
+  const totals = { members, money, avg, median, min, max };
+  const findings = latestFindings({
+    totals,
+    channels,
+    campaigns: allCampaigns,
+    ages,
+    occupations,
+    regions,
+    displayDate
+  });
+  const caveats = [
+    `ยอดรวม รายเดือน ช่องทาง แคมเปญ ช่วงอายุ อาชีพ พื้นที่ เพศ สถานะ และข้อสังเกต อัปเดตจาก Tableau ถึง ${displayDate} โดยใช้ข้อมูล aggregate เท่านั้น`,
+    `เดือน ${THAI_MONTHS[Number(asOf.slice(5, 7)) - 1]} เป็นข้อมูลถึงวันที่ ${Number(asOf.slice(8, 10))} และอาจยังไม่ครบเดือน`,
+    "รายการที่ Tableau ไม่ระบุรหัสแคมเปญแสดงเป็น “ไม่มีแคมเปญ” และรวมอยู่ในการกระทบยอด",
+    "ป้ายกำกับ TR_CHANNEL_TYPE (แอป/โมบายแบงก์กิ้ง/เคาน์เตอร์/ตัวแทน) เป็นการตีความจากรูปแบบข้อมูล ยังไม่ได้ยืนยันกับเจ้าของข้อมูล",
+    "คำอธิบายรหัส MEMBER_STATUS (A/Q/A3/R3/C/R1) เป็นการอนุมานและยังไม่ได้ยืนยันกับเจ้าของข้อมูล"
+  ];
   const live = {
     meta: {
       periodEnd: asOf,
@@ -754,9 +895,12 @@ try {
       areaAsOf: displayDate,
       areaMoneyAsOf: displayDate,
       genderStatusAsOf: displayDate,
-      liveSections: ["totals", "months", "priorMonths", "historicalYears", "cumulativeYears", "daily", "priorDaily", "channels", "channelTypes", "ages", "occupations", "regions", "provinces", "genders", "statuses"]
+      detailAsOf: displayDate,
+      campaignAsOf: displayDate,
+      findingsAsOf: displayDate,
+      liveSections: ["totals", "months", "priorMonths", "historicalYears", "cumulativeYears", "daily", "priorDaily", "channels", "channelTypes", "campaigns", "ages", "occupations", "regions", "provinces", "genders", "statuses", "findings", "caveats"]
     },
-    totals: { members, money, avg, median, min, max },
+    totals,
     priorYear: { year: PRIOR_YEAR_BE, asOf: priorAsOf, members: priorMembers },
     ...(memberDrive ? { memberDrive } : {}),
     months,
@@ -767,12 +911,15 @@ try {
     priorDaily,
     channels,
     channelTypes,
+    campaigns,
     ages,
     occupations,
     regions,
     provinces,
     genders,
-    statuses
+    statuses,
+    findings,
+    caveats
   };
 
   const payload = `/* Generated from aggregate-only Tableau VDS queries. Do not edit manually. */\nwindow.NSF_TABLEAU_LIVE = ${JSON.stringify(live, null, 2)};\n`;
