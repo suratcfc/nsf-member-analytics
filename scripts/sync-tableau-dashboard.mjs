@@ -423,12 +423,15 @@ function campaignRows(rows, totalMembers, totalMoney) {
     totalMembers,
     totalMoney,
     "Campaign aggregate query"
-  ).map((row) => ({
-    code: row.name === "ไม่ระบุ" ? "-" : row.name,
-    name: row.name === "ไม่ระบุ" ? "ไม่มีแคมเปญ" : row.name,
-    members: row.members,
-    money: row.money
-  }));
+  ).map((row) => {
+    const isUnassigned = row.name === "ไม่ระบุ" || row.name === "-";
+    return {
+      code: isUnassigned ? "-" : row.name,
+      name: isUnassigned ? "ไม่มีแคมเปญ" : row.name,
+      members: row.members,
+      money: row.money
+    };
+  });
 }
 
 function formatNumber(value) {
