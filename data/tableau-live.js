@@ -3446,8 +3446,8 @@ window.NSF_TABLEAU_LIVE = {
       "code": "A",
       "name": "A · ปกติ",
       "label": "ปกติ",
-      "members": 66266,
-      "money": 23456376.22
+      "members": 66262,
+      "money": 23455076.22
     },
     {
       "code": "Q",
@@ -3460,15 +3460,15 @@ window.NSF_TABLEAU_LIVE = {
       "code": "A3",
       "name": "A3 · ปกติ (สถานะย่อย)",
       "label": "ปกติ (สถานะย่อย)",
-      "members": 64,
-      "money": 31200
+      "members": 68,
+      "money": 32500
     },
     {
       "code": "R3",
       "name": "R3 · ลาออก",
       "label": "ลาออก",
-      "members": 42,
-      "money": 104099
+      "members": 45,
+      "money": 115379
     },
     {
       "code": "C",
@@ -3478,18 +3478,18 @@ window.NSF_TABLEAU_LIVE = {
       "money": 1050
     },
     {
-      "code": "R1",
-      "name": "R1 · ลาออก",
-      "label": "ลาออก",
-      "members": 4,
-      "money": 11830
-    },
-    {
       "code": "D1",
       "name": "D1 · ยังไม่ยืนยันความหมาย",
       "label": "ยังไม่ยืนยันความหมาย",
       "members": 1,
       "money": 2500
+    },
+    {
+      "code": "R1",
+      "name": "R1 · ลาออก",
+      "label": "ลาออก",
+      "members": 1,
+      "money": 550
     }
   ],
   "findings": [
