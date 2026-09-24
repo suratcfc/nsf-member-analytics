@@ -414,6 +414,23 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
 .gender-status-grid .channel-pie-svg{max-width:340px}
 @media(max-width:980px){.gender-status-grid{grid-template-columns:1fr}}
 
+.month-picker{margin-bottom:24px}
+.month-picker h3{margin:0 0 8px;font-size:18px}
+.month-picker-years{display:grid;gap:16px;margin:20px 0}
+.month-picker-years fieldset{border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.month-picker-years legend{padding:0 8px;font-weight:600}
+.month-picker-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.month-pick{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:9px;cursor:pointer}
+.month-pick:has(input:checked){background:var(--paper-2);border-color:var(--blue,#4E93DB)}
+.month-pick:has(input:disabled){opacity:.5;cursor:default}
+.month-pick input{width:17px;height:17px;accent-color:#4E93DB;flex-shrink:0}
+.month-pick input:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.month-pick small{display:block;font-size:11px;color:var(--muted)}
+.month-sum{border-top:1px solid var(--line);padding-top:16px}
+.month-sum strong{display:block;font-size:30px;color:var(--ink)}
+.month-sum p{margin:6px 0;color:var(--muted);font-size:13px}
+@media(max-width:700px){.month-picker-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:400px){.month-picker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -490,6 +507,14 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   <div class="wrap">
     <div class="sec-head"><h2>รายเดือน</h2><span class="hint" id="hMonth"></span></div>
     <div class="sec-rule"></div>
+    <div class="card chart month-picker" id="monthPicker">
+      <h3>รวมสมาชิกใหม่ตามเดือนที่เลือก</h3>
+      <p class="month-note">ติ๊กได้หลายเดือนและข้ามปี · ยอดรวมส่วนนี้ไม่เปลี่ยนกราฟเปรียบเทียบหรือยอดสะสมทั้งปี</p>
+      <div class="month-actions"><button type="button" id="sumCurrentYear">เลือกทุกเดือนที่มีข้อมูลปี 2569</button><button type="button" id="sumClear">ล้างที่เลือก</button></div>
+      <div class="month-sum" id="sumResult" role="status" aria-live="polite" aria-atomic="true"></div>
+      <div class="month-picker-years" id="sumMonths"></div>
+      <p class="month-note" id="sumSource"></p>
+    </div>
     <div class="card chart month-chart">
       <div class="month-toolbar">
         <fieldset class="month-years" id="monthYears"><legend>เลือกปีที่ต้องการเปรียบเทียบ</legend></fieldset>
@@ -929,6 +954,61 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   document.getElementById('monthReset').addEventListener('click',function(){
     selectedMonthYears=[2569,2568,2567];renderMonthControls();renderMonths();
   });
+
+  // Independent month selection: sum monthly new-member counts, never cumulative points.
+  var pickedMonths=new Set();
+  function selectableMonths(){
+    return cumulativeSeries().map(function(s){
+      var previous=0;
+      return {year:s.year,asOf:s.asOf,months:s.points.map(function(p){
+        var members=p.members-previous;previous=p.members;
+        return {key:p.date.slice(0,7),members:members,partial:p.date!==driveMonthEnd(s.year-543,Number(p.date.slice(5,7))),asOf:p.date};
+      })};
+    });
+  }
+  function renderPickedTotal(){
+    var total=0,count=0,lines=[],partials=[];
+    selectableMonths().forEach(function(s){
+      var rows=s.months.filter(function(m){return pickedMonths.has(m.key);});
+      if(!rows.length)return;
+      var subtotal=rows.reduce(function(sum,m){return sum+m.members;},0);
+      total+=subtotal;count+=rows.length;
+      lines.push('ปี '+s.year+': '+rows.map(function(m){return sumMonthNames[Number(m.key.slice(5,7))-1];}).join(', ')+' = '+nf(subtotal)+' คน');
+      rows.filter(function(m){return m.partial;}).forEach(function(m){partials.push(driveDate(m.asOf));});
+    });
+    var out=document.getElementById('sumResult');out.innerHTML='';
+    out.appendChild(el('span','',count?'รวมสมาชิกใหม่จาก '+count+' เดือนที่เลือก':'ยังไม่ได้เลือกเดือน'));
+    out.appendChild(el('strong','',count?nf(total)+' คน':'—'));
+    lines.forEach(function(line){out.appendChild(el('p','',line));});
+    if(partials.length)out.appendChild(el('p','','* มีเดือนที่ข้อมูลยังไม่ครบเดือน: ถึง '+partials.join(', ')));
+  }
+  var sumMonthNames=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  function renderMonthPicker(){
+    var container=document.getElementById('sumMonths');container.innerHTML='';
+    selectableMonths().forEach(function(s){
+      var field=el('fieldset');field.appendChild(el('legend','','ปี '+s.year));
+      var grid=el('div','month-picker-grid');
+      sumMonthNames.forEach(function(name,i){
+        var key=String(s.year-543)+'-'+String(i+1).padStart(2,'0');
+        var row=s.months.find(function(m){return m.key===key;});
+        var label=el('label','month-pick'),input=el('input');input.type='checkbox';input.value=key;
+        input.disabled=!row;input.checked=!!row&&pickedMonths.has(key);
+        input.setAttribute('aria-label',name+' '+s.year+(row&&row.partial?' ข้อมูลไม่ครบเดือน':''));
+        input.addEventListener('change',function(){if(input.checked)pickedMonths.add(key);else pickedMonths.delete(key);renderPickedTotal();});
+        label.appendChild(input);var text=el('span','',name+(row&&row.partial?' *':''));
+        text.appendChild(el('small','',row?nf(row.members)+' คน':'ยังไม่มีข้อมูล'));label.appendChild(text);grid.appendChild(label);
+      });
+      field.appendChild(grid);container.appendChild(field);
+    });
+    document.getElementById('sumSource').textContent='แหล่งข้อมูล: Tableau · VIEW_BI_DS · ปี 2569 ถึง '+summaryAsOf+' · ปีก่อนใช้ยอดเพิ่มระหว่างสิ้นเดือนจากข้อมูลสะสมเต็มปี · ผลรวมคือยอดรายเดือน ไม่ใช่จำนวนบุคคลไม่ซ้ำข้ามปี';
+    renderPickedTotal();
+  }
+  document.getElementById('sumClear').addEventListener('click',function(){pickedMonths.clear();renderMonthPicker();});
+  document.getElementById('sumCurrentYear').addEventListener('click',function(){
+    pickedMonths.clear();var current=selectableMonths().find(function(s){return s.year===2569;});
+    if(current)current.months.forEach(function(m){pickedMonths.add(m.key);});renderMonthPicker();
+  });
+  renderMonthPicker();
 
   // ---------- member-drive target trend ----------
   var selectedDriveYears=[2569,2568,2567];
