@@ -106,9 +106,6 @@ a{color:var(--ink)}
 .headline .member-total,.headline .target-gap{padding-left:28px;border-left:1px solid var(--line)}
 .target-gap[data-state="behind"] .bignum{color:var(--behind)}
 .target-gap[data-state="ahead"] .bignum,.target-gap[data-state="met"] .bignum{color:var(--ahead)}
-.hero-money{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;padding:16px 0;margin-bottom:0;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
-.hero-money .v{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--ink-soft)}
-.hero-money .note{font-size:12px}
 
 /* ---------- sections ---------- */
 section{padding:52px 0 4px;scroll-margin-top:142px}
@@ -286,8 +283,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
   .headline .member-total,.headline .target-gap{padding:20px 0 0;border-left:0;border-top:1px solid var(--line)}
   .headline .label{margin-bottom:7px}
   .headline .note{margin-top:8px}
-  .hero-money{gap:4px 12px}
-  .hero-money .note{flex-basis:100%}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important;animation:none !important}
@@ -480,11 +475,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
         <div class="bignum"><span id="kGap">—</span><small>คน</small></div>
         <div class="note" id="kGapNote">เทียบกับเป้าหมายสมาชิกใหม่ทั้งปี</div>
       </div>
-    </div>
-    <div class="hero-money">
-      <span>เงินนำส่งงวดแรก</span>
-      <span class="v" id="kMoney">—</span>
-      <span class="note" id="kMoneyNote">บาท</span>
     </div>
   </div>
 </div>
@@ -776,8 +766,6 @@ footer code{font-family:var(--mono);background:var(--paper-2);padding:2px 7px;bo
       gapCard.setAttribute('data-state', 'unknown');
       gapNote.textContent = 'รอข้อมูลเป้าหมายหรือยอดสมาชิก';
     }
-    document.getElementById('kMoney').textContent = nf(D.totals.money);
-    document.getElementById('kMoneyNote').textContent = 'บาท · ข้อมูลถึง ' + summaryAsOf;
   }
   renderHeaderMetrics();
 
